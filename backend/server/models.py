@@ -5,7 +5,7 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-
+#MODELS
 class Landlord(db.Model):
     __tablename__ = 'landlords'
 
