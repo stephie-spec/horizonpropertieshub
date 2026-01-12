@@ -1,0 +1,270 @@
+.dashboardContainer {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.menuToggle {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 999;
+  background-color: #1a1a1a;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 1.25rem;
+}
+
+.sidebar {
+  width: 280px;
+  background-color: #1a1a1a;
+  color: white;
+  padding: 1.5rem 0;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.sidebarHeader {
+  padding: 0 1.5rem 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebarLogo {
+  color: #c41e3a;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.sidebarNav {
+  padding: 1.5rem 0;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+}
+
+.navItem:hover {
+  background-color: rgba(196, 30, 58, 0.1);
+  color: white;
+  border-left-color: #c41e3a;
+}
+
+.navItem.active {
+  background-color: rgba(196, 30, 58, 0.2);
+  color: #c41e3a;
+  border-left-color: #c41e3a;
+}
+
+.navIcon {
+  font-size: 1.25rem;
+}
+
+.navLabel {
+  font-weight: 500;
+}
+
+.logoutBtn {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  right: 1.5rem;
+  background-color: #c41e3a;
+  color: white;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logoutBtn:hover {
+  background-color: #a01630;
+}
+
+.mainContent {
+  flex: 1;
+  margin-left: 280px;
+  padding: 2rem;
+}
+
+.dashboardHeader {
+  margin-bottom: 2rem;
+}
+
+.dashboardHeader h1 {
+  margin: 0;
+  color: #1a1a1a;
+  font-size: 2rem;
+}
+
+.dashboardHeader p {
+  margin: 0.5rem 0 0;
+  color: #666666;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.statIcon {
+  font-size: 2.5rem;
+}
+
+.statContent {
+  flex: 1;
+}
+
+.statLabel {
+  margin: 0;
+  color: #666666;
+  font-size: 0.875rem;
+}
+
+.statValue {
+  margin: 0.5rem 0 0;
+  color: #1a1a1a;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 2rem;
+}
+
+.section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.section h2 {
+  margin: 0 0 1.5rem;
+  color: #1a1a1a;
+  font-size: 1.25rem;
+}
+
+.quickActions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.actionBtn {
+  background-color: #00a651;
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.actionBtn:hover {
+  background-color: #009043;
+  transform: translateY(-2px);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table thead {
+  background-color: #f8f9fa;
+}
+
+.table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #1a1a1a;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.badge {
+  display: inline-block;
+  background-color: #c8e6c9;
+  color: #1b5e20;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .menuToggle {
+    display: block;
+  }
+
+  .sidebar {
+    left: -280px;
+    transition: left 0.3s ease;
+    z-index: 998;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .mainContent {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .dashboardHeader h1 {
+    font-size: 1.5rem;
+  }
+
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
