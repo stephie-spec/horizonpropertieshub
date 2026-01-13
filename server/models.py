@@ -77,7 +77,12 @@ class Payment(db.Model):
     status = db.Column(db.String, default='pending')
     tenant = relationship('Tenant', back_populates='payments')
 
-
-
-
-
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "tenant_id": self.tenant_id,
+            "amount": float(self.amount),
+            "mpesa_code": self.mpesa_code,
+            "status": self.status,
+            "paid_date": self.paid_date.isoformat() if self.paid_date else None
+        }
