@@ -82,44 +82,16 @@ class Tenant(db.Model):
     move_in_date = db.Column(db.DateTime, default=datetime.utcnow)
 
     unit = relationship('Unit', back_populates='tenants')
-    tenant_payments = relationship(
-        'TenantPayment',
-        back_populates='tenant',
-        cascade='all, delete-orphan'
-    )
 
 
 class Payment(db.Model):
     __tablename__ = 'payments'
 
     id = db.Column(db.String, primary_key=True)
-    month = db.Column(db.String, nullable=False)
-    year = db.Column(db.Integer, nullable=False)
+    tenant_id = db.Column(db.String, db.ForeignKey('tenants.id'), nullable=False)
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     mpesa_code = db.Column(db.String, unique=True, nullable=False)
     paid_date = db.Column(db.DateTime, default=datetime.utcnow)
 
-    tenant_payments = relationship(
-        'TenantPayment',
-        back_populates='payment',
-        cascade='all, delete-orphan'
-    )
 
 
-class TenantPayment(db.Model):
-    __tablename__ = 'tenant_payments'
-
-    tenant_id = db.Column(
-        db.String,
-        ForeignKey('tenants.id'),
-        primary_key=True
-    )
-    payment_id = db.Column(
-        db.String,
-        ForeignKey('payments.id'),
-        primary_key=True
-    )
-    remarks = db.Column(db.Text)
-
-    tenant = relationship('Tenant', back_populates='tenant_payments')
-    payment = relationship('Payment', back_populates='tenant_payments')   

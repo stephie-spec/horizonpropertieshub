@@ -1,2 +1,9 @@
-# Variable file
+migrations/
+*.pyc
+__pycache__/
+*.sqlite
+instance/
+.DS_Store
 .env
+venv/
+.env.local
