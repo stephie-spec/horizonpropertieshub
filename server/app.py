@@ -2,7 +2,7 @@ from flask import Flask, request, make_response
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
-from models import db, Mentor, Student, Cohort
+from models import db
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///horizonpropertieshub.db'
