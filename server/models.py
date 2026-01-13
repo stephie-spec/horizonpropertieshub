@@ -5,7 +5,6 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-#Models
 class Landlord(db.Model):
     __tablename__ = 'landlords'
 
@@ -20,7 +19,6 @@ class Landlord(db.Model):
         cascade='all, delete-orphan'
     )
 
-
 class Property(db.Model):
     __tablename__ = 'properties'
 
@@ -29,19 +27,14 @@ class Property(db.Model):
     location = db.Column(db.String, nullable=False)
     units_count = db.Column(db.Integer, nullable=False)
 
-    landlord_id = db.Column(
-        db.String,
-        ForeignKey('landlords.id'),
-        nullable=False
-    )
-
+    landlord_id = db.Column(db.String, ForeignKey('landlords.id'), nullable=False)
     landlord = relationship('Landlord', back_populates='properties')
+
     units = relationship(
         'Unit',
         back_populates='property',
         cascade='all, delete-orphan'
     )
-
 
 class Unit(db.Model):
     __tablename__ = 'units'
@@ -51,19 +44,14 @@ class Unit(db.Model):
     rent_amount = db.Column(db.Numeric(10, 2), nullable=False)
     status = db.Column(db.String, nullable=False)
 
-    property_id = db.Column(
-        db.String,
-        ForeignKey('properties.id'),
-        nullable=False
-    )
-
+    property_id = db.Column(db.String, ForeignKey('properties.id'), nullable=False)
     property = relationship('Property', back_populates='units')
+
     tenants = relationship(
         'Tenant',
         back_populates='unit',
         cascade='all, delete-orphan'
     )
-
 
 class Tenant(db.Model):
     __tablename__ = 'tenants'
@@ -73,25 +61,42 @@ class Tenant(db.Model):
     phone = db.Column(db.String, nullable=False)
     id_number = db.Column(db.String, nullable=False)
 
-    unit_id = db.Column(
-        db.String,
-        ForeignKey('units.id'),
-        nullable=False
-    )
-
+    unit_id = db.Column(db.String, ForeignKey('units.id'), nullable=False)
     move_in_date = db.Column(db.DateTime, default=datetime.utcnow)
 
     unit = relationship('Unit', back_populates='tenants')
-
+    tenant_payments = relationship(
+        'TenantPayment',
+        back_populates='tenant',
+        cascade='all, delete-orphan'
+    )
 
 class Payment(db.Model):
     __tablename__ = 'payments'
 
     id = db.Column(db.String, primary_key=True)
-    tenant_id = db.Column(db.String, db.ForeignKey('tenants.id'), nullable=False)
+    month = db.Column(db.String, nullable=False)
+    year = db.Column(db.Integer, nullable=False)
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     mpesa_code = db.Column(db.String, unique=True, nullable=False)
     paid_date = db.Column(db.DateTime, default=datetime.utcnow)
+
+    tenant_payments = relationship(
+        'TenantPayment',
+        back_populates='payment',
+        cascade='all, delete-orphan'
+    )
+
+class TenantPayment(db.Model):
+    __tablename__ = 'tenant_payments'
+
+    tenant_id = db.Column(db.String, ForeignKey('tenants.id'), primary_key=True)
+    payment_id = db.Column(db.String, ForeignKey('payments.id'), primary_key=True)
+    remarks = db.Column(db.Text)
+
+    tenant = relationship('Tenant', back_populates='tenant_payments')
+    payment = relationship('Payment', back_populates='tenant_payments')
+
 
 
 

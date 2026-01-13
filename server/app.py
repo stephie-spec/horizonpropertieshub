@@ -2,17 +2,19 @@ from flask import Flask, request, make_response, jsonify
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
-from models import db, Tenant, Unit
+from models import db, Landlord, Property, Unit, Tenant, Payment, TenantPayment
+import os
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///horizonpropertieshub.db'
+os.makedirs(os.path.join(app.root_path, "instance"), exist_ok=True)
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.root_path, 'instance', 'horizonpropertieshub.db')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
 
 CORS(app)
-
-migrate = Migrate(app, db)
 db.init_app(app)
+migrate = Migrate(app, db)
+
 
 api = Api(app)
 
@@ -177,5 +179,5 @@ class Units(Resource):
         return response
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(port=5555, debug=True)
