@@ -10,7 +10,8 @@ flask-sqlalchemy = "*" #sqlalchemy
 importlib-metadata = "*"
 importlib-resources = "*"
 sqlalchemy-serializer = "*"
-
+flask-restful = "*"
+flask-cors = "*"
 
 [dev-packages]
 
