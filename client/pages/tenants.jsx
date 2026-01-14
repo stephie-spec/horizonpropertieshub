@@ -4,6 +4,8 @@ import Layout from "../components/Layout"
 import TenantModal from "../components/TenantModal"
 import { toast } from "react-toastify"
 
+const API_URL = "http://127.0.0.1:5555"
+
 export default function Tenants() {
   const router = useRouter()
   const [units, setUnits] = useState([])
@@ -20,15 +22,15 @@ export default function Tenants() {
 
     setLandlord(storedLandlord)
 
-    fetch(`http://127.0.0.1:5555/tenants?landlord_id=${storedLandlord.id}`)
+  fetch(`${API_URL}/tenants?landlord_id=${storedLandlord.id}`)      .then(res => res.json())
       .then(res => res.json())
       .then(setTenants)
   }, [])
   useEffect(() => {
   if (!landlord) return;
 
-  fetch(`http://127.0.0.1:5555/units?landlord_id=${landlord.id}`)
-    .then(res => res.json())
+fetch(`${API_URL}/units?landlord_id=${landlord.id}`)
+  .then(res => res.json())
     .then(setUnits)
     .catch(err => console.error("Failed to fetch units:", err));
 }, [landlord]);
@@ -53,9 +55,9 @@ export default function Tenants() {
     data.append("id_number", formData.id_number)
     data.append("landlord_id", landlord.id)
 
-    const url = editingTenant
-      ? `http://127.0.0.1:5555/tenants/${editingTenant.id}`
-      : "http://127.0.0.1:5555/tenants"
+     const url = editingTenant
+   ? `${API_URL}/tenants/${editingTenant.id}`
+  : `${API_URL}/tenants`
 
     const method = editingTenant ? "PUT" : "POST"
 
@@ -79,7 +81,7 @@ export default function Tenants() {
 
   //delete tenant
   const handleDeleteTenant = async (id) => {
-    await fetch(`http://127.0.0.1:5555/tenants/${id}`, { method: "DELETE" })
+    await fetch(`${API_URL}/tenants/${id}`, { method: "DELETE" })
     setTenants(tenants.filter(t => t.id !== id))
     toast.success("Tenant deleted")
     setDeleteId(null)
