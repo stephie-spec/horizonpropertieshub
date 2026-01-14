@@ -89,11 +89,19 @@ fetch(`${API_URL}/units?landlord_id=${landlord.id}`)
 
   //delete tenant
   const handleDeleteTenant = async (id) => {
-    await fetch(`${API_URL}/tenants/${id}`, { method: "DELETE" })
+  try {
+    const res = await fetch(`${API_URL}/tenants/${id}`, { method: "DELETE" })
+    if (!res.ok) throw new Error()
+
     setTenants(tenants.filter(t => t.id !== id))
     toast.success("Tenant deleted")
+  } catch {
+    toast.error("Failed to delete tenant")
+  } finally {
     setDeleteId(null)
   }
+}
+
 
 
   if (!landlord) return null
