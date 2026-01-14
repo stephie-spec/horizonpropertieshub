@@ -14,16 +14,33 @@ export default function Units() {
   const [deleteId, setDeleteId] = useState(null)
   const [filterProperty, setFilterProperty] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
+  const API_URL = "http://localhost:5555"
 
   useEffect(() => {
-    const user = localStorage.getItem("landlord")
-    if (!user) {
-      router.push("/login")
-    } else {
-      setLandlord(JSON.parse(user))
-      setUnits(mockUnits)
-    }
-  }, [router])
+  const user = localStorage.getItem("landlord")
+
+  if (!user) {
+    router.push("/login")
+    return
+  }
+
+  setLandlord(JSON.parse(user))
+
+  fetch(`${API_URL}/units`)
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Failed to fetch units")
+      }
+      return res.json()
+    })
+    .then((data) => {
+      setUnits(data)
+    })
+    .catch(() => {
+      toast.error("Could not load units")
+    })
+}, [router])
+
 
   const handleAddUnit = () => {
     setEditingUnit(null)
