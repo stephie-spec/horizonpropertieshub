@@ -2,10 +2,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Link from "next/link"
 import Layout from "../components/Layout"
-
-const API_URL = "http://localhost:5555"
-
-
+import { mockProperties, mockUnits } from "../lib/mockData"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -14,7 +11,12 @@ export default function Dashboard() {
   const [payments, setPayments] = useState([])
   const [deleteId, setDeleteId] = useState(null)
 
+  const [dashboardStats, setDashboardStats] = useState(null)
+
   const API_URL = "http://localhost:5555"
+
+
+  
   useEffect(() => {
     const user = localStorage.getItem("landlord")
     if (!user) {
@@ -60,15 +62,37 @@ const fetchDashboardStats = async (landlordId) => {
 
   if (!landlord) return null
 
-  const totalProperties = mockProperties.filter((p) => p.landlord_id === landlord.id).length
-  const totalUnits = mockUnits.length
-  const occupiedUnits = mockUnits.filter((u) => u.tenant_id !== null).length
-  const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
-  const totalRevenue = payments
-  .filter((p) => p.status === "completed")
-  .reduce((sum, p) => sum + p.amount, 0)
+//   const totalProperties = mockProperties.filter((p) => p.landlord_id === landlord.id).length
+//   const totalUnits = mockUnits.length
+//   const occupiedUnits = mockUnits.filter((u) => u.tenant_id !== null).length
+//   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
+//   const totalRevenue = payments
+//   .filter((p) => p.status === "completed")
+//   .reduce((sum, p) => sum + p.amount, 0)
+  
+//   const totalProperties = properties.filter(
+//   (p) => p.landlord_id === landlord.id
+// ).length
 
-const recentPayments = payments.slice(-5).reverse()
+// const totalUnits = units.length
+
+// const occupiedUnits = units.filter(
+//   (u) => u.tenant_id !== null
+// ).length
+
+//   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
+//   const totalRevenue = payments
+//   .filter((p) => p.status === "completed")
+//   .reduce((sum, p) => sum + p.amount, 0)
+
+  const totalProperties = dashboardStats?.total_properties || 0
+const totalUnits = dashboardStats?.total_units || 0
+const occupiedUnits = dashboardStats?.occupied_units || 0
+const occupancyRate = dashboardStats?.total_units > 0 
+  ? Math.round((dashboardStats.occupied_units / dashboardStats.total_units) * 100) 
+  : 0
+const totalRevenue = dashboardStats?.total_revenue || 0
+const recentPayments = dashboardStats?.recent_payments || []
 
   return (
     <Layout>

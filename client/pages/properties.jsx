@@ -20,7 +20,10 @@ export default function Properties() {
     } else {
       const userData = JSON.parse(user)
       setLandlord(userData)
-      setProperties(mockProperties.filter((p) => p.landlord_id === userData.id))
+      fetch(`http://127.0.0.1:5555/properties?landlord_id=${userData.id}`)
+        .then(res => res.json())
+        .then(data => setProperties(data))
+        .catch(err => console.error("Failed to fetch properties:", err))
     }
   }, [router])
 
@@ -33,33 +36,39 @@ export default function Properties() {
     setEditingProperty(property)
     setShowModal(true)
   }
-
-  const handleSaveProperty = (formData) => {
+  //save/ update
+  const handleSaveProperty = async (formData) => {
+    let url = "http://127.0.0.1:5555/properties"
+    let method = "POST"
     if (editingProperty) {
-      const index = mockProperties.findIndex((p) => p.id === editingProperty.id)
-      mockProperties[index] = { ...editingProperty, ...formData }
-      toast.success("Property updated successfully!")
-    } else {
-      const newProperty = {
-        id: Math.max(...mockProperties.map((p) => p.id), 0) + 1,
-        ...formData,
-        landlord_id: landlord.id,
-        created_at: new Date().toISOString(),
-      }
-      mockProperties.push(newProperty)
-      toast.success("Property added successfully!")
+      url = `http://127.0.0.1:5555/properties/${editingProperty.id}`
+      method = "PUT"
     }
-    setProperties(mockProperties.filter((p) => p.landlord_id === landlord.id))
+
+    const response = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...formData, landlord_id: landlord.id }),
+    })
+    const savedProperty = await response.json()
+
+    setProperties((prev) =>
+      editingProperty
+        ? prev.map((p) => (p.id === savedProperty.id ? savedProperty : p))
+        : [...prev, savedProperty]
+    )
     setShowModal(false)
   }
 
-  const handleDeleteProperty = (id) => {
-    const index = mockProperties.findIndex((p) => p.id === id)
-    mockProperties.splice(index, 1)
-    toast.success("Property deleted successfully!")
-    setProperties(mockProperties.filter((p) => p.landlord_id === landlord.id))
-    setDeleteId(null)
+
+  const handleDeleteProperty = async (id) => {
+    const response = await fetch(`http://127.0.0.1:5555/properties/${id}`, { method: "DELETE" })
+    if (response.ok) {
+      setProperties(properties.filter((p) => p.id !== id))
+    }
   }
+
+
 
   if (!landlord) return null
 
