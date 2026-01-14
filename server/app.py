@@ -406,14 +406,14 @@ class Login(Resource):
             }),
             200
         )
-api.add_resource(Login, '/login')
-
-
-return make_response(
+        return make_response(
     jsonify({
         "message": "Login successful"
     }),
     200
+	)X
+api.add_resource(Login, '/login')
+
 )
 
 
