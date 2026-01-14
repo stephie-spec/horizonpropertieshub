@@ -24,8 +24,12 @@ export default function Payments() {
     if (!user) {
       router.push("/login")
     } else {
-      setLandlord(JSON.parse(user))
-      setPayments(mockPayments)
+      const userData = JSON.parse(user)
+      setLandlord(userData)
+      fetch(`${API_URL}/payments?landlord_id=${userData.id}`)
+        .then((res) => res.json())
+        .then((data) => setPayments(data))
+        .catch((err) => console.error("Failed to fetch payments:", err))
     }
   }, [router])
 
