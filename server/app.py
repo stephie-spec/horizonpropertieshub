@@ -177,7 +177,67 @@ class Units(Resource):
             200,
         )
         return response
+class Payments(Resource):
+    def get(self, payment_id=None):
+        if payment_id:
+            payment = Payment.query.get_or_404(payment_id)
+            return make_response(jsonify(payment.to_dict()), 200)
 
+        payments = Payment.query.all()
+        return make_response(
+            jsonify([p.to_dict() for p in payments]),
+            200
+        )
+
+    def post(self):
+        data = request.form
+
+        payment = Payment(
+            tenant_id=data.get('tenant_id'),
+            amount=data.get('amount'),
+            mpesa_code=data.get('mpesa_code'),
+            status='paid'
+        )
+
+        db.session.add(payment)
+        db.session.commit()
+
+        return make_response(
+            jsonify({
+                "message": "Payment recorded successfully",
+                "payment": payment.to_dict()
+            }),
+            201
+        )
+
+    def put(self, payment_id):
+        payment = Payment.query.get_or_404(payment_id)
+
+        payment.amount = request.form.get('amount', payment.amount)
+        payment.status = request.form.get('status', payment.status)
+
+        db.session.commit()
+
+        return make_response(
+            jsonify({
+                "message": "Payment updated successfully",
+                "payment": payment.to_dict()
+            }),
+            200
+        )
+
+    def delete(self, payment_id):
+        payment = Payment.query.get_or_404(payment_id)
+        db.session.delete(payment)
+        db.session.commit()
+
+        return make_response(
+            jsonify({"message": "Payment deleted successfully"}),
+            200
+        )
+api.add_resource(Payments, '/payments', '/payments/<int:payment_id>')
 
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
+
+
