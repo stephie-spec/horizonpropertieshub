@@ -320,7 +320,102 @@ class Payments(Resource):
         )
 api.add_resource(Payments, '/payments', '/payments/<int:payment_id>')
 
+class Login(Resource):
+    pass
+
+class Login(Resource):
+    def post(self):
+        return make_response(
+            jsonify({"message": "Login endpoint reached"}),
+            200
+        )
+
+class Login(Resource):
+    def post(self):
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        return make_response(
+            jsonify({
+                "email": email,
+                "password": password
+            }),
+            200
+        )
+class Login(Resource):
+    def post(self):
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        if not email or not password:
+            return make_response(
+                jsonify({"error": "Email and password required"}),
+                400
+            )
+
+        return make_response(
+            jsonify({"message": "Credentials received"}),
+            200
+        )
+class Login(Resource):
+    def post(self):
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        if not email or not password:
+            return make_response(
+                jsonify({"error": "Email and password required"}),
+                400
+            )
+
+        landlord = Landlord.query.filter_by(email=email).first()
+
+        if not landlord:
+            return make_response(
+                jsonify({"error": "Invalid credentials"}),
+                401
+            )
+
+        return make_response(
+            jsonify({"message": "User found"}),
+            200
+        )
+class Login(Resource):
+    def post(self):
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        if not email or not password:
+            return make_response(
+                jsonify({"error": "Email and password required"}),
+                400
+            )
+
+        landlord = Landlord.query.filter_by(email=email).first()
+
+        if not landlord or landlord.password_hash != password:
+            return make_response(
+                jsonify({"error": "Invalid credentials"}),
+                401
+            )
+
+        return make_response(
+            jsonify({
+                "message": "Login successful",
+                "landlord_id": landlord.id
+            }),
+            200
+        )
+        return make_response(
+    jsonify({
+        "message": "Login successful"
+    }),
+    200
+	)X
+api.add_resource(Login, '/login')
+
+)
+
+
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
-
-
