@@ -320,6 +320,13 @@ class Payments(Resource):
         )
 api.add_resource(Payments, '/payments', '/payments/<int:payment_id>')
 
+class Logout(Resource):
+    def post(self):
+        return {"message": "Logout successful"}, 200
+
+api.add_resource(Logout, '/logout')
+
+
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
 
