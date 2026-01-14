@@ -348,7 +348,15 @@ class Login(Resource):
 
 
 
+class Login(Resource):
+    def post(self):
+        email = request.form.get('email')
+        password = request.form.get('password')
 
-
-if __name__ == "__main__":
-    app.run(port=5555, debug=True)
+        return make_response(
+            jsonify({
+                "email": email,
+                "password": password
+            }),
+            200
+        )
