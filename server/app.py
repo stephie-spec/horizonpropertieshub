@@ -421,7 +421,38 @@ class DashboardStats(Resource):
 
 api.add_resource(DashboardStats, '/dashboard/stats')
 
+class Register(Resource):
+    def post(self):
+        data = request.form
+        
+        # Check if email already exists
+        existing_landlord = Landlord.query.filter_by(email=data['email']).first()
+        if existing_landlord:
+            return make_response(
+                jsonify({"error": "Email already registered"}),
+                400
+            )
+        
+        # Create new landlord
+        landlord = Landlord(
+            name=data['name'],
+            email=data['email'],
+            phone=data.get('phone'),
+            password_hash=generate_password_hash(data['password'])
+        )
+        
+        db.session.add(landlord)
+        db.session.commit()
+        
+        return make_response(
+            jsonify({
+                "message": "Registration successful",
+                "landlord": landlord.to_dict()
+            }),
+            201
+        )
 
+api.add_resource(Register, '/register')
 class Logout(Resource):
     def post(self):
         return {"message": "Logout successful"}, 200

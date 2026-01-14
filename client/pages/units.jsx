@@ -16,9 +16,8 @@ export default function Units() {
   const [filterStatus, setFilterStatus] = useState("")
   const API_URL = "http://localhost:5555"
 
-  useEffect(() => {
+useEffect(() => {
   const user = localStorage.getItem("landlord")
-
   if (!user) {
     router.push("/login")
     return
@@ -27,18 +26,16 @@ export default function Units() {
   setLandlord(JSON.parse(user))
 
   fetch(`${API_URL}/units`)
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("Failed to fetch units")
-      }
-      return res.json()
-    })
-    .then((data) => {
-      setUnits(data)
-    })
-    .catch(() => {
-      toast.error("Could not load units")
-    })
+    .then((res) => res.json())
+    .then((data) => setUnits(data || []))
+
+  fetch(`${API_URL}/properties`)
+    .then((res) => res.json())
+    .then((data) => setProperties(data || []))
+
+  fetch(`${API_URL}/tenants`)
+    .then((res) => res.json())
+    .then((data) => setTenants(data || []))
 }, [router])
 
 
@@ -52,31 +49,65 @@ export default function Units() {
     setShowModal(true)
   }
 
-  const handleSaveUnit = (formData) => {
-    if (editingUnit) {
-      const index = mockUnits.findIndex((u) => u.id === editingUnit.id)
-      mockUnits[index] = { ...editingUnit, ...formData }
-      toast.success("Unit updated successfully!")
-    } else {
-      const newUnit = {
-        id: Math.max(...mockUnits.map((u) => u.id), 0) + 1,
-        ...formData,
-        created_at: new Date().toISOString(),
-      }
-      mockUnits.push(newUnit)
-      toast.success("Unit added successfully!")
-    }
-    setUnits([...mockUnits])
-    setShowModal(false)
+const handleSaveUnit = (formData) => {
+  const formDataToSend = new FormData()
+  formDataToSend.append('unit_number', formData.unit_number)
+  formDataToSend.append('rent_amount', formData.rent_amount)
+  formDataToSend.append('status', formData.status || 'vacant')
+  formDataToSend.append('property_id', formData.property_id)
+  formDataToSend.append('tenant_id', formData.tenant_id || '')
+  if (formData.move_in_date) formDataToSend.append('move_in_date', formData.move_in_date)
+  if (formData.move_out_date) formDataToSend.append('move_out_date', formData.move_out_date)
+
+  let url = API_URL + '/units'
+  let method = 'POST'
+  
+  if (editingUnit) {
+    url = `${API_URL}/units/${editingUnit.id}`
+    method = 'PUT'
   }
 
-  const handleDeleteUnit = (id) => {
-    const index = mockUnits.findIndex((u) => u.id === id)
-    mockUnits.splice(index, 1)
-    toast.success("Unit deleted successfully!")
-    setUnits([...mockUnits])
-    setDeleteId(null)
-  }
+  fetch(url, {
+    method,
+    body: formDataToSend,
+  })
+    .then(res => res.json())
+    .then(result => {
+      if (editingUnit) {
+        setUnits(units.map(u => 
+          u.id === editingUnit.id ? result.unit : u
+        ))
+        toast.success("Unit updated!")
+      } else {
+        setUnits([...units, result.unit])
+        toast.success("Unit added!")
+      }
+      setShowModal(false)
+    })
+    .catch(error => {
+      console.error("Save error:", error)
+      toast.error("Failed to save unit")
+    })
+}
+
+const handleDeleteUnit = (id) => {
+  fetch(`${API_URL}/units/${id}`, {
+    method: "DELETE",
+  })
+    .then(res => {
+      if (!res.ok) throw new Error("Delete failed")
+      return res.json()
+    })
+    .then(() => {
+      setUnits(units.filter((u) => u.id !== id))
+      setDeleteId(null)
+      toast.success("Unit deleted")
+    })
+    .catch(error => {
+      console.error("Delete error:", error)
+      toast.error("Failed to delete unit")
+    })
+}
 
   if (!landlord) return null
 

@@ -12,55 +12,54 @@ export default function Login() {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
-if (!formData.email || !formData.password) {
-  toast.error("Email and password are required")
-  setLoading(false)
-  return
-}
 
-const handleSubmit = async (e) => {
-  e.preventDefault()
-  setLoading(true)
-
-  if (!formData.email || !formData.password) {
-    toast.error("Email and password are required")
-    setLoading(false)
-    return
-  }
-
-  try {
-    const response = await fetch("http://127.0.0.1:5555/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams(formData),
-    })
-
-    const data = await response.json()
-
-   if (response.ok) {
-  localStorage.setItem(
-    "landlord",
-    JSON.stringify({
-      id: data.landlord_id,
-      email: formData.email,
-    })
-  )
-  toast.success("Login successful")
-  router.push("/dashboard")
-} else {
-      toast.error(data.error || "Login failed")
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    
+   
+    if (!formData.email || !formData.password) {
+      toast.error("Email and password are required")
+      return
     }
-  } catch (error) {
-    toast.error("Server error")
+    
+    setLoading(true)
+
+    try {
+
+      const response = await fetch("http://localhost:5555/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams(formData),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        console.log("Login response:", data) 
+        
+        localStorage.setItem(
+          "landlord",
+          JSON.stringify({
+            id: data.landlord?.id || data.id || 1, 
+            email: data.landlord?.email || formData.email,
+            name: data.landlord?.name || "Landlord",
+          })
+        )
+        toast.success("Login successful")
+        router.push("/dashboard")
+      } else {
+        toast.error(data.error || "Login failed")
+      }
+    } catch (error) {
+      console.error("Login error:", error)
+      toast.error("Server error")
+    }
+
+    setLoading(false)
   }
 
-  setLoading(false)
-}
-
-toast.info("Login clicked")
-setLoading(false)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">

@@ -19,24 +19,37 @@ export default function Payments() {
   const API_URL = "http://localhost:5555"
 
 
-  useEffect(() => {
-    const user = localStorage.getItem("landlord")
-    if (!user) {
-      router.push("/login")
-    } else {
-      const userData = JSON.parse(user)
-      setLandlord(userData)
-      fetch(`${API_URL}/payments?landlord_id=${userData.id}`)
-        .then((res) => res.json())
-        .then((data) => setPayments(data))
-        .catch((err) => console.error("Failed to fetch payments:", err))
+useEffect(() => {
+  const user = localStorage.getItem("landlord")
+  if (!user) {
+    router.push("/login")
+    return
+  }
+  
+  const userData = JSON.parse(user)
+  setLandlord(userData)
+  
+  // Fetch payments
+  fetch(`${API_URL}/payments`)
+    .then((res) => res.json())
+    .then((data) => {
+      console.log("Payments data:", data)
+      setPayments(data || [])
+    })
+    .catch((err) => {
+      console.error("Failed to fetch payments:", err)
+      toast.error("Failed to load payments")
+    })
 
-      fetch(`${API_URL}/tenants`)
-        .then((res) => res.json())
-        .then((data) => setTenants(data))
-        .catch((err) => console.error("Failed to fetch tenants:", err))
-    }
-  }, [router])
+  // Fetch tenants
+  fetch(`${API_URL}/tenants`)
+    .then((res) => res.json())
+    .then((data) => setTenants(data || []))
+    .catch((err) => {
+      console.error("Failed to fetch tenants:", err)
+      toast.error("Failed to load tenants")
+    })
+}, [router])
 
 
   const handleAddPayment = () => {
@@ -105,22 +118,24 @@ export default function Payments() {
   }
 
 
-  const handleDeletePayment = async (id) => {
-    try {
-      const res = await fetch(`${API_URL}/payments/${id}`, {
-        method: "DELETE",
-      })
-
+const handleDeletePayment = (id) => {
+  fetch(`${API_URL}/payments/${id}`, {
+    method: "DELETE",
+  })
+    .then(res => {
       if (!res.ok) throw new Error("Delete failed")
-
-      setPayments((prev) => prev.filter((p) => p.id !== id))
+      return res.json()
+    })
+    .then(() => {
+      setPayments(payments.filter((p) => p.id !== id))
       setDeleteId(null)
       toast.success("Payment deleted")
-    } catch (error) {
-      console.error("Failed to delete payment", error)
-      alert("Failed to delete payment")
-    }
-  }
+    })
+    .catch(error => {
+      console.error("Delete error:", error)
+      toast.error("Failed to delete payment")
+    })
+}
 
   if (!landlord) return null
 
@@ -181,7 +196,7 @@ export default function Payments() {
               </thead>
               <tbody>
                 {filteredPayments.map((payment) => {
-                  const tenant = mockTenants.find((t) => t.id === payment.tenant_id)
+                  const tenant = tenants.find((t) => t.id === payment.tenant_id)
                   return (
                     <tr key={payment.id} className="border-b border-gray-200 hover:bg-gray-50">
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">{tenant?.name || "Unknown"}</td>

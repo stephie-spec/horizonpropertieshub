@@ -75,12 +75,22 @@ export default function Properties() {
   }
 
 
-  const handleDeleteProperty = async (id) => {
-    const response = await fetch(`http://127.0.0.1:5555/properties/${id}`, { method: "DELETE" })
-    if (response.ok) {
-      setProperties(properties.filter((p) => p.id !== id))
-    }
-  }
+const handleDeleteProperty = (id) => {
+  fetch(`http://127.0.0.1:5555/properties/${id}`, { 
+    method: "DELETE" 
+  })
+    .then(response => {
+      if (response.ok) {
+        setProperties(properties.filter((p) => p.id !== id))
+        toast.success("Property deleted successfully!")
+      } else {
+        toast.error("Failed to delete property")
+      }
+    })
+    .catch(() => {
+      toast.error("Failed to delete property")
+    })
+}
 
   if (!landlord) return null
 
