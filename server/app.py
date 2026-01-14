@@ -209,7 +209,7 @@ class Units(Resource):
         # SEARCH FUNCTIONALITY
         if search:
             query = query.filter(
-                Unit.unit_number.ilike(f"%{search}%") |
+                Unit.unit_number.ilike(f"%{search}%") | Unit.status.iiike(f"%{search}%")
             )
 
         units = query.all()
