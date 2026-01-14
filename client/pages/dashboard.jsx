@@ -4,17 +4,15 @@ import Link from "next/link"
 import Layout from "../components/Layout"
 import { mockProperties, mockUnits } from "../lib/mockData"
 
-
-const API_URL = "http://localhost:5555"
-
-
-
 export default function Dashboard() {
   const router = useRouter()
   const [landlord, setLandlord] = useState(null)
   const [tenants, setTenants] = useState([])
+
   const [payments, setPayments] = useState([])
   const [deleteId, setDeleteId] = useState(null)
+
+  const API_URL = "http://localhost:5555"
   useEffect(() => {
     const user = localStorage.getItem("landlord")
     if (!user) {
