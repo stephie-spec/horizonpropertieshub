@@ -4,18 +4,18 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Layout from "../components/Layout"
 import PaymentModal from "../components/PaymentModal"
-import { mockPayments, mockTenants } from "../lib/mockData"
 import { toast } from "react-toastify"
 
 export default function Payments() {
   const router = useRouter()
   const [landlord, setLandlord] = useState(null)
   const [payments, setPayments] = useState([])
+  const [tenants, setTenants] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [editingPayment, setEditingPayment] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
   const [filterStatus, setFilterStatus] = useState("")
-  
+
   const API_URL = "http://localhost:5555"
 
 
@@ -30,6 +30,11 @@ export default function Payments() {
         .then((res) => res.json())
         .then((data) => setPayments(data))
         .catch((err) => console.error("Failed to fetch payments:", err))
+
+      fetch(`${API_URL}/tenants`)
+        .then((res) => res.json())
+        .then((data) => setTenants(data))
+        .catch((err) => console.error("Failed to fetch tenants:", err))
     }
   }, [router])
 
@@ -44,37 +49,78 @@ export default function Payments() {
     setShowModal(true)
   }
 
-  const handleSavePayment = (formData) => {
-    if (editingPayment) {
-      const index = mockPayments.findIndex((p) => p.id === editingPayment.id)
-      mockPayments[index] = { ...editingPayment, ...formData }
-      toast.success("Payment updated successfully!")
-    } else {
-      const newPayment = {
-        id: Math.max(...mockPayments.map((p) => p.id), 0) + 1,
-        ...formData,
+  const handleSavePayment = async (formData) => {
+    try {
+      if (editingPayment) {
+        const response = await fetch(
+          `${API_URL}/payments/${editingPayment.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          }
+        )
+
+        if (!response.ok) {
+          throw new Error("Update failed")
+        }
+
+        const updatedPayment = await response.json()
+        const newPayments = payments.map((payment) => {
+          if (payment.id === updatedPayment.id) {
+            return updatedPayment
+          }
+          return payment
+        })
+
+        setPayments(newPayments)
+        toast.success("Payment updated successfully!")
+      } else {
+        const response = await fetch(`${API_URL}/payments`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        })
+
+        if (!response.ok) {
+          throw new Error("Create failed")
+        }
+
+        const newPayment = await response.json()
+
+        setPayments([...payments, newPayment])
+        toast.success("Payment recorded successfully!")
       }
-      mockPayments.push(newPayment)
-      toast.success("Payment recorded successfully!")
+
+      setShowModal(false)
+      setEditingPayment(null)
+    } catch (error) {
+      console.error("Failed to save payment:", error)
+      alert("Failed to save payment")
     }
-    setPayments([...mockPayments])
-    setShowModal(false)
   }
+
 
   const handleDeletePayment = async (id) => {
-  try {
-    const res = await fetch(`${API_URL}/payments/${id}`, {
-      method: "DELETE",
-    })
+    try {
+      const res = await fetch(`${API_URL}/payments/${id}`, {
+        method: "DELETE",
+      })
 
-    if (!res.ok) throw new Error("Delete failed")
+      if (!res.ok) throw new Error("Delete failed")
 
-    setPayments(payments.filter((p) => p.id !== id))
-    setDeleteId(null)
-  } catch (error) {
-    console.error("Failed to delete payment", error)
+      setPayments((prev) => prev.filter((p) => p.id !== id))
+      setDeleteId(null)
+      toast.success("Payment deleted")
+    } catch (error) {
+      console.error("Failed to delete payment", error)
+      alert("Failed to delete payment")
+    }
   }
-}
 
   if (!landlord) return null
 
