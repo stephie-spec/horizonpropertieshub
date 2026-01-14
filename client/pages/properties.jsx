@@ -12,6 +12,9 @@ export default function Properties() {
   const [editingProperty, setEditingProperty] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5555" 
+
+
   useEffect(() => {
   const storedLandlord = JSON.parse(localStorage.getItem("landlord"))
   if (!storedLandlord) {
@@ -21,7 +24,7 @@ export default function Properties() {
 
   setLandlord(storedLandlord)
 
-  fetch(`http://127.0.0.1:5555/properties?landlord_id=${storedLandlord.id}`)
+  fetch(`${API_URL}/properties?landlord_id=${storedLandlord.id}`)
     .then(res => res.json())
     .then(data => setProperties(data))
     .catch(err => console.error("Failed to fetch properties:", err))

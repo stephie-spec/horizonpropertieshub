@@ -9,6 +9,8 @@ export default function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" })
   const [loading, setLoading] = useState(false)
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5555" 
+  
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
@@ -26,7 +28,7 @@ export default function Login() {
 
     try {
 
-      const response = await fetch("http://localhost:5555/login", {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",

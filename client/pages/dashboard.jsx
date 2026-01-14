@@ -13,7 +13,7 @@ export default function Dashboard() {
 
   const [dashboardStats, setDashboardStats] = useState(null)
 
-  const API_URL = "http://localhost:5555"
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5555"
 
 
   
