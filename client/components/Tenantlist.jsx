@@ -1,8 +1,66 @@
-"use client"
-
 import { useState, useEffect } from "react"
 
 export default function TenantModal({ isOpen, tenant, onClose, onSave }) {
+  const [tenants, setTenants] = useState([])
+  const [selectedTenant, setSelectedTenant] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  //fech tenants
+  const fetchTenants = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:5555/tenants")
+      const data = await res.json()
+      setTenants(data)
+    } catch (err) {
+      console.error("Error fetching tenants:", err)
+    }
+  }
+  useEffect(() => {
+    fetchTenants()
+  }, [])
+  //handle open modal for editing and adding tenant
+  const handleOpenModal = (tenant = null) => {
+    setSelectedTenant(tenant)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setSelectedTenant(null)
+    setIsModalOpen(false)
+  }
+  //Create/ update tenant
+  const handleSaveTenant = async (tenantData) => {
+    let url = "http://127.0.0.1:5555/tenants"
+    let method = "POST"
+
+    if (tenantData.id) {
+      url = `http://127.0.0.1:5555/tenants/${tenantData.id}`
+      method = "PUT"
+    }
+
+    const response = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tenantData),
+    })
+
+    if (response.ok) {
+      fetchTenants()
+    } else {
+      console.error("Failed to save tenant")
+    }
+  }
+  //delete tenant
+  const handleDeleteTenant = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this tenant?")) return
+
+    const response = await fetch(`http://127.0.0.1:5555/tenants/${id}`, {
+      method: "DELETE",
+    })
+
+    if (response.ok) {
+      setTenants(tenants.filter((t) => t.id !== id))
+    }
+  }
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -32,10 +90,9 @@ export default function TenantModal({ isOpen, tenant, onClose, onSave }) {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    onSave(formData) 
-    onClose() 
+
   }
 
   if (!isOpen) return null
@@ -43,9 +100,7 @@ export default function TenantModal({ isOpen, tenant, onClose, onSave }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
       <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          {tenant ? "Edit Tenant" : "Add Tenant"}
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">{tenant ? "Edit Tenant" : "Add Tenant"}</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -57,6 +112,7 @@ export default function TenantModal({ isOpen, tenant, onClose, onSave }) {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="John Doe"
             />
           </div>
 
@@ -69,6 +125,7 @@ export default function TenantModal({ isOpen, tenant, onClose, onSave }) {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="john@example.com"
             />
           </div>
 
@@ -81,6 +138,7 @@ export default function TenantModal({ isOpen, tenant, onClose, onSave }) {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="+254712345678"
             />
           </div>
 
@@ -93,6 +151,7 @@ export default function TenantModal({ isOpen, tenant, onClose, onSave }) {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g., 12345678"
             />
           </div>
 
@@ -100,13 +159,13 @@ export default function TenantModal({ isOpen, tenant, onClose, onSave }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
             >
               {tenant ? "Update" : "Add"} Tenant
             </button>
