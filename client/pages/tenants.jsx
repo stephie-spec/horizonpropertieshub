@@ -22,17 +22,25 @@ export default function Tenants() {
 
     setLandlord(storedLandlord)
 
-  fetch(`${API_URL}/tenants?landlord_id=${storedLandlord.id}`)      .then(res => res.json())
-      .then(res => res.json())
-      .then(setTenants)
+  fetch(`${API_URL}/tenants?landlord_id=${storedLandlord.id}`)
+  .then(res => {
+    if (!res.ok) throw new Error("Failed to fetch tenants")
+    return res.json()
+  })
+  .then(setTenants)
+  .catch(() => toast.error("Failed to load tenants"))
   }, [])
+
   useEffect(() => {
   if (!landlord) return;
 
 fetch(`${API_URL}/units?landlord_id=${landlord.id}`)
-  .then(res => res.json())
-    .then(setUnits)
-    .catch(err => console.error("Failed to fetch units:", err));
+  .then(res => {
+    if (!res.ok) throw new Error("Failed to fetch units")
+    return res.json()
+  })
+  .then(setUnits)
+  .catch(() => toast.error("Failed to load units"))
 }, [landlord]);
   
   const handleAddTenant = () => {
