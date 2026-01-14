@@ -2,11 +2,13 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Link from "next/link"
 import Layout from "../components/Layout"
-import { mockProperties, mockUnits, mockTenants, mockPayments } from "../lib/mockData"
+import { mockProperties, mockUnits, mockPayments } from "../lib/mockData"
 
+const API_URL = "http://localhost:5555"
 export default function Dashboard() {
   const router = useRouter()
   const [landlord, setLandlord] = useState(null)
+  const [tenants, setTenants] = useState([])
 
   useEffect(() => {
     const user = localStorage.getItem("landlord")
@@ -16,6 +18,13 @@ export default function Dashboard() {
       setLandlord(JSON.parse(user))
     }
   }, [router])
+  // Fetch tenants data from backend
+  useEffect(() => {
+    fetch(`${API_URL}/tenants`)
+      .then((res) => res.json())
+      .then((data) => setTenants(data))
+      .catch((err) => console.error("Failed to fetch tenants", err))
+  }, [])
 
   if (!landlord) return null
 
