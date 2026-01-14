@@ -44,7 +44,12 @@ const fetchPayments = async () => {
   const totalUnits = mockUnits.length
   const occupiedUnits = mockUnits.filter((u) => u.tenant_id !== null).length
   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
-  
+  const totalRevenue = payments
+  .filter((p) => p.status === "completed")
+  .reduce((sum, p) => sum + p.amount, 0)
+
+const recentPayments = payments.slice(-5).reverse()
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto">
