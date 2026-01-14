@@ -19,40 +19,45 @@ export default function Register() {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const handleSubmit = async (e) => {
+  e.preventDefault()
 
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match")
-      return
-    }
+  if (formData.password !== formData.confirmPassword) {
+    toast.error("Passwords do not match")
+    return
+  }
 
-    if (mockLandlords.some((l) => l.email === formData.email)) {
-      toast.error("Email already registered")
-      return
-    }
+  setLoading(true)
 
-    setLoading(true)
-    setTimeout(() => {
-      const newLandlord = {
-        id: Math.max(...mockLandlords.map((l) => l.id)) + 1,
+  try {
+    const response = await fetch(`${API_URL}/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        password_hash: formData.password,
-        created_at: new Date().toISOString(),
-      }
+        password: formData.password,
+      }),
+    })
 
-      mockLandlords.push(newLandlord)
-      localStorage.setItem(
-        "landlord",
-        JSON.stringify({ id: newLandlord.id, name: newLandlord.name, email: newLandlord.email }),
-      )
-      toast.success("Registration successful!")
-      router.push("/dashboard")
-      setLoading(false)
-    }, 500)
+    const data = await response.json()
+
+    if (!response.ok) {
+      toast.error(data.error || "Registration failed")
+    } else {
+      toast.success("Registration successful")
+      router.push("/login")
+    }
+  } catch (error) {
+    toast.error("Server error")
   }
+
+  setLoading(false)
+}
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
