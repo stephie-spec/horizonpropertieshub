@@ -56,38 +56,38 @@ fetch(`${API_URL}/units?landlord_id=${landlord.id}`)
   }
   //save tenant or edit
   const handleSaveTenant = async (formData) => {
-    if (!landlord) return
+  const method = editingTenant ? "PUT" : "POST"
+  const url = editingTenant
+    ? `${API_URL}/tenants/${editingTenant.id}`
+    : `${API_URL}/tenants`
 
-    const data = new FormData()
-    data.append("name", formData.name)
-    data.append("phone", formData.phone)
-    data.append("email", formData.email)
-    data.append("id_number", formData.id_number)
-    data.append("landlord_id", landlord.id)
+  const data = new FormData()
+  data.append("name", formData.name)
+  data.append("email", formData.email)
+  data.append("phone", formData.phone)
+  data.append("id_number", formData.id_number)
+  data.append("landlord_id", landlord.id)
 
-     const url = editingTenant
-   ? `${API_URL}/tenants/${editingTenant.id}`
-  : `${API_URL}/tenants`
+  try {
+    const res = await fetch(url, {
+      method,
+      body: data
+    })
 
-    const method = editingTenant ? "PUT" : "POST"
-
-    const res = await fetch(url, { method, body: data })
-
-    if (!res.ok) {
-      toast.error("Failed to save tenant")
-      return
-    }
+    if (!res.ok) throw new Error("Request failed")
 
     const savedTenant = await res.json()
-
-    setTenants(editingTenant
-      ? tenants.map(t => t.id === savedTenant.id ? savedTenant : t)
-      : [...tenants, savedTenant]
+    setTenants((prev) =>
+      editingTenant
+        ? prev.map((t) => (t.id === savedTenant.id ? savedTenant : t))
+        : [...prev, savedTenant]
     )
-
-    toast.success(editingTenant ? "Tenant updated" : "Tenant added")
-    setShowModal(false)
+  } catch (err) {
+    console.error(err)
+    toast.error("Failed to save tenant")
   }
+}
+
 
   //delete tenant
   const handleDeleteTenant = async (id) => {
