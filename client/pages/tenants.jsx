@@ -6,23 +6,33 @@ import { toast } from "react-toastify"
 
 export default function Tenants() {
   const router = useRouter()
+  const [units, setUnits] = useState([])
   const [landlord, setLandlord] = useState(null)
   const [tenants, setTenants] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [editingTenant, setEditingTenant] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
+  //fetch
+  useEffect(() => {
+    const storedLandlord = JSON.parse(localStorage.getItem("landlord"))
+    if (!storedLandlord) return
 
- useEffect(() => {
-  const landlord = JSON.parse(localStorage.getItem("landlord"))
-  if (!landlord) return
+    setLandlord(storedLandlord)
 
-  fetch(`http://127.0.0.1:5555/tenants?landlord_id=${landlord.id}`)
+    fetch(`http://127.0.0.1:5555/tenants?landlord_id=${storedLandlord.id}`)
+      .then(res => res.json())
+      .then(setTenants)
+  }, [])
+  useEffect(() => {
+  if (!landlord) return;
+
+  fetch(`http://127.0.0.1:5555/units?landlord_id=${landlord.id}`)
     .then(res => res.json())
-    .then(data => setTenants(data))
-}, [])
-
-
+    .then(setUnits)
+    .catch(err => console.error("Failed to fetch units:", err));
+}, [landlord]);
+  
   const handleAddTenant = () => {
     setEditingTenant(null)
     setShowModal(true)
@@ -32,41 +42,58 @@ export default function Tenants() {
     setEditingTenant(tenant)
     setShowModal(true)
   }
+  //save tenant or edit
+  const handleSaveTenant = async (formData) => {
+    if (!landlord) return
 
-  const handleSaveTenant = (formData) => {
-    if (editingTenant) {
-      const index = mockTenants.findIndex((t) => t.id === editingTenant.id)
-      mockTenants[index] = { ...editingTenant, ...formData }
-      toast.success("Tenant updated successfully!")
-    } else {
-      const newTenant = {
-        id: Math.max(...mockTenants.map((t) => t.id), 0) + 1,
-        ...formData,
-        created_at: new Date().toISOString(),
-      }
-      mockTenants.push(newTenant)
-      toast.success("Tenant added successfully!")
+    const data = new FormData()
+    data.append("name", formData.name)
+    data.append("phone", formData.phone)
+    data.append("email", formData.email)
+    data.append("id_number", formData.id_number)
+    data.append("landlord_id", landlord.id)
+
+    const url = editingTenant
+      ? `http://127.0.0.1:5555/tenants/${editingTenant.id}`
+      : "http://127.0.0.1:5555/tenants"
+
+    const method = editingTenant ? "PUT" : "POST"
+
+    const res = await fetch(url, { method, body: data })
+
+    if (!res.ok) {
+      toast.error("Failed to save tenant")
+      return
     }
-    setTenants([...mockTenants])
+
+    const savedTenant = await res.json()
+
+    setTenants(editingTenant
+      ? tenants.map(t => t.id === savedTenant.id ? savedTenant : t)
+      : [...tenants, savedTenant]
+    )
+
+    toast.success(editingTenant ? "Tenant updated" : "Tenant added")
     setShowModal(false)
   }
 
-  const handleDeleteTenant = (id) => {
-    const index = mockTenants.findIndex((t) => t.id === id)
-    mockTenants.splice(index, 1)
-    toast.success("Tenant deleted successfully!")
-    setTenants([...mockTenants])
+  //delete tenant
+  const handleDeleteTenant = async (id) => {
+    await fetch(`http://127.0.0.1:5555/tenants/${id}`, { method: "DELETE" })
+    setTenants(tenants.filter(t => t.id !== id))
+    toast.success("Tenant deleted")
     setDeleteId(null)
   }
 
+
   if (!landlord) return null
 
-  const filteredTenants = tenants.filter(
-    (t) =>
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.phone.includes(searchQuery),
+  const filteredTenants = tenants.filter(t =>
+    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (t.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (t.phone || "").includes(searchQuery)
   )
+
 
   return (
     <Layout>
@@ -109,7 +136,7 @@ export default function Tenants() {
               </thead>
               <tbody>
                 {filteredTenants.map((tenant) => {
-                  const unit = mockUnits.find((u) => u.tenant_id === tenant.id)
+                  const unit = units.find((u) => u.tenant_id === tenant.id)
                   return (
                     <tr key={tenant.id} className="border-b border-gray-200 hover:bg-gray-50">
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">{tenant.name}</td>
