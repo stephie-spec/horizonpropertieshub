@@ -187,22 +187,37 @@ api.add_resource(Tenants, '/tenants', '/tenants/<int:tenant_id>')
 
 
 class Units(Resource):
+   class Units(Resource):
     def get(self, unit_id=None):
+
         if unit_id:
             unit = Unit.query.get_or_404(unit_id)
-            response = make_response(
-                jsonify(unit.to_dict()),
-                200,
+            return make_response(jsonify(unit.to_dict()), 200)
+
+        # SEARCH & FILTER
+        search = request.args.get('search')
+        property_id = request.args.get('property_id')
+
+        query = Unit.query
+
+
+        if property_id:
+            query = query.filter(Unit.property_id == property_id)
+
+        # SEARCH FUNCTIONALITY
+        if search:
+            query = query.filter(
+                Unit.name.ilike(f"%{search}%") |
+                Unit.unit_number.ilike(f"%{search}%") |
+                Unit.description.ilike(f"%{search}%")
             )
-            return response
-        else:
-            units = Unit.query.all()
-            response_body = [u.to_dict() for u in units]
-            response = make_response(
-                jsonify(response_body),
-                200,
-            )
-            return response
+
+        units = query.all()
+        return make_response(
+            jsonify([u.to_dict() for u in units]),
+            200
+        )
+
         
     def post(self):
         unit = Unit(
