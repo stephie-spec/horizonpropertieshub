@@ -282,7 +282,6 @@ class Units(Resource):
 
 api.add_resource(Units, '/units', '/units/<int:unit_id>')
 
-
 # Payments
 class Payments(Resource):
     def get(self, payment_id=None):
