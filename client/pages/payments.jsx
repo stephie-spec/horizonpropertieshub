@@ -4,13 +4,13 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Layout from "../components/Layout"
 import PaymentModal from "../components/PaymentModal"
-import { mockPayments, mockTenants } from "../lib/mockData"
 import { toast } from "react-toastify"
 
 export default function Payments() {
   const router = useRouter()
   const [landlord, setLandlord] = useState(null)
   const [payments, setPayments] = useState([])
+  const [tenants, setTenants] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [editingPayment, setEditingPayment] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
@@ -30,6 +30,11 @@ export default function Payments() {
         .then((res) => res.json())
         .then((data) => setPayments(data))
         .catch((err) => console.error("Failed to fetch payments:", err))
+
+      fetch(`${API_URL}/tenants`)
+        .then((res) => res.json())
+        .then((data) => setTenants(data))
+        .catch((err) => console.error("Failed to fetch tenants:", err))
     }
   }, [router])
 
