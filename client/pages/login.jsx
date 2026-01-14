@@ -16,23 +16,9 @@ export default function Login() {
   const handleSubmit = (e) => {
     e.preventDefault()
     setLoading(true)
-
-    setTimeout(() => {
-      const landlord = mockLandlords.find((l) => l.email === formData.email && l.password_hash === formData.password)
-
-      if (landlord) {
-        localStorage.setItem(
-          "landlord",
-          JSON.stringify({ id: landlord.id, name: landlord.name, email: landlord.email }),
-        )
-        toast.success("Login successful!")
-        router.push("/dashboard")
-      } else {
-        toast.error("Invalid email or password")
-      }
-      setLoading(false)
-    }, 500)
   }
+toast.info("Login clicked")
+setLoading(false)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
