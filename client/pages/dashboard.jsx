@@ -2,8 +2,8 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Link from "next/link"
 import Layout from "../components/Layout"
-import { mockProperties, mockUnits, mockPayments } from "../lib/mockData"
-
+import { mockProperties, mockUnits } from "../lib/mockData"
+const [payments, setPayments] = useState([])
 const API_URL = "http://localhost:5555"
 export default function Dashboard() {
   const router = useRouter()
@@ -16,6 +16,7 @@ export default function Dashboard() {
       router.push("/login")
     } else {
       setLandlord(JSON.parse(user))
+      fetchPayments()
     }
   }, [router])
   // Fetch tenants data from backend
