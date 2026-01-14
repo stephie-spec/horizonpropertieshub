@@ -34,11 +34,17 @@ const handleSubmit = async (e) => {
 
     const data = await response.json()
 
-    if (response.ok) {
-      localStorage.setItem("landlord", JSON.stringify(data))
-      toast.success("Login successful")
-      router.push("/dashboard")
-    } else {
+   if (response.ok) {
+  localStorage.setItem(
+    "landlord",
+    JSON.stringify({
+      id: data.landlord_id,
+      email: formData.email,
+    })
+  )
+  toast.success("Login successful")
+  router.push("/dashboard")
+} else {
       toast.error(data.error || "Login failed")
     }
   } catch (error) {
