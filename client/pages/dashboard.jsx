@@ -26,6 +26,17 @@ export default function Dashboard() {
       .then((data) => setTenants(data))
       .catch((err) => console.error("Failed to fetch tenants", err))
   }, [])
+const fetchPayments = async () => {
+  try {
+    const res = await fetch(`${API_URL}/payments`)
+    if (!res.ok) throw new Error("Failed to fetch payments")
+
+    const data = await res.json()
+    setPayments(data)
+  } catch (error) {
+    console.error("Failed to load payments", error)
+  }
+}
 
   if (!landlord) return null
 
