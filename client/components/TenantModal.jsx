@@ -34,8 +34,7 @@ export default function TenantModal({ isOpen, tenant, onClose, onSave }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSave(formData) 
-    onClose() 
+    onSave(formData)  
   }
 
   if (!isOpen) return null

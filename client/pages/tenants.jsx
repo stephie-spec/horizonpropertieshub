@@ -4,6 +4,8 @@ import Layout from "../components/Layout"
 import TenantModal from "../components/TenantModal"
 import { toast } from "react-toastify"
 
+const API_URL = "http://127.0.0.1:5555"
+
 export default function Tenants() {
   const router = useRouter()
   const [units, setUnits] = useState([])
@@ -13,6 +15,8 @@ export default function Tenants() {
   const [editingTenant, setEditingTenant] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [saving, setSaving] = useState(false)
+
   //fetch
   useEffect(() => {
     const storedLandlord = JSON.parse(localStorage.getItem("landlord"))
@@ -20,17 +24,25 @@ export default function Tenants() {
 
     setLandlord(storedLandlord)
 
-    fetch(`http://127.0.0.1:5555/tenants?landlord_id=${storedLandlord.id}`)
-      .then(res => res.json())
-      .then(setTenants)
+  fetch(`${API_URL}/tenants?landlord_id=${storedLandlord.id}`)
+  .then(res => {
+    if (!res.ok) throw new Error("Failed to fetch tenants")
+    return res.json()
+  })
+  .then(setTenants)
+  .catch(() => toast.error("Failed to load tenants"))
   }, [])
+
   useEffect(() => {
   if (!landlord) return;
 
-  fetch(`http://127.0.0.1:5555/units?landlord_id=${landlord.id}`)
-    .then(res => res.json())
-    .then(setUnits)
-    .catch(err => console.error("Failed to fetch units:", err));
+fetch(`${API_URL}/units?landlord_id=${landlord.id}`)
+  .then(res => {
+    if (!res.ok) throw new Error("Failed to fetch units")
+    return res.json()
+  })
+  .then(setUnits)
+  .catch(() => toast.error("Failed to load units"))
 }, [landlord]);
   
   const handleAddTenant = () => {
@@ -44,46 +56,54 @@ export default function Tenants() {
   }
   //save tenant or edit
   const handleSaveTenant = async (formData) => {
-    if (!landlord) return
+  const method = editingTenant ? "PUT" : "POST"
+  const url = editingTenant
+    ? `${API_URL}/tenants/${editingTenant.id}`
+    : `${API_URL}/tenants`
 
-    const data = new FormData()
-    data.append("name", formData.name)
-    data.append("phone", formData.phone)
-    data.append("email", formData.email)
-    data.append("id_number", formData.id_number)
-    data.append("landlord_id", landlord.id)
+  const data = new FormData()
+  data.append("name", formData.name)
+  data.append("email", formData.email)
+  data.append("phone", formData.phone)
+  data.append("id_number", formData.id_number)
+  data.append("landlord_id", landlord.id)
 
-    const url = editingTenant
-      ? `http://127.0.0.1:5555/tenants/${editingTenant.id}`
-      : "http://127.0.0.1:5555/tenants"
+  try {
+    const res = await fetch(url, {
+      method,
+      body: data
+    })
 
-    const method = editingTenant ? "PUT" : "POST"
-
-    const res = await fetch(url, { method, body: data })
-
-    if (!res.ok) {
-      toast.error("Failed to save tenant")
-      return
-    }
+    if (!res.ok) throw new Error("Request failed")
 
     const savedTenant = await res.json()
-
-    setTenants(editingTenant
-      ? tenants.map(t => t.id === savedTenant.id ? savedTenant : t)
-      : [...tenants, savedTenant]
+    setTenants((prev) =>
+      editingTenant
+        ? prev.map((t) => (t.id === savedTenant.id ? savedTenant : t))
+        : [...prev, savedTenant]
     )
-
-    toast.success(editingTenant ? "Tenant updated" : "Tenant added")
-    setShowModal(false)
+  } catch (err) {
+    console.error(err)
+    toast.error("Failed to save tenant")
   }
+}
+
 
   //delete tenant
   const handleDeleteTenant = async (id) => {
-    await fetch(`http://127.0.0.1:5555/tenants/${id}`, { method: "DELETE" })
+  try {
+    const res = await fetch(`${API_URL}/tenants/${id}`, { method: "DELETE" })
+    if (!res.ok) throw new Error()
+
     setTenants(tenants.filter(t => t.id !== id))
     toast.success("Tenant deleted")
+  } catch {
+    toast.error("Failed to delete tenant")
+  } finally {
     setDeleteId(null)
   }
+}
+
 
 
   if (!landlord) return null
