@@ -15,6 +15,9 @@ export default function Payments() {
   const [editingPayment, setEditingPayment] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
   const [filterStatus, setFilterStatus] = useState("")
+  
+  const API_URL = "http://localhost:5555"
+
 
   useEffect(() => {
     const user = localStorage.getItem("landlord")
@@ -25,6 +28,7 @@ export default function Payments() {
       setPayments(mockPayments)
     }
   }, [router])
+
 
   const handleAddPayment = () => {
     setEditingPayment(null)
@@ -53,13 +57,20 @@ export default function Payments() {
     setShowModal(false)
   }
 
-  const handleDeletePayment = (id) => {
-    const index = mockPayments.findIndex((p) => p.id === id)
-    mockPayments.splice(index, 1)
-    toast.success("Payment deleted successfully!")
-    setPayments([...mockPayments])
+  const handleDeletePayment = async (id) => {
+  try {
+    const res = await fetch(`${API_URL}/payments/${id}`, {
+      method: "DELETE",
+    })
+
+    if (!res.ok) throw new Error("Delete failed")
+
+    setPayments(payments.filter((p) => p.id !== id))
     setDeleteId(null)
+  } catch (error) {
+    console.error("Failed to delete payment", error)
   }
+}
 
   if (!landlord) return null
 
