@@ -320,6 +320,9 @@ class Payments(Resource):
         )
 api.add_resource(Payments, '/payments', '/payments/<int:payment_id>')
 
+class Login(Resource):
+    pass
+
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
 
