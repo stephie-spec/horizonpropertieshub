@@ -62,11 +62,11 @@ def seed_data():
         # Units
         units = [
             Unit(unit_number='A101', rent_amount=45000, status='occupied',
-                 property_id='prop_001', tenant_id='tnt_001', move_in_date=date(2024, 2, 1)),
+                 property_id=skyline.id, tenant_id='tnt_001', move_in_date=date(2024, 2, 1)),
             Unit(unit_number='A102', rent_amount=42000, status='occupied',
-                 property_id='prop_001', tenant_id='tnt_002', move_in_date=date(2024, 2, 1)),
+                 property_id=skyline.id, tenant_id='tnt_002', move_in_date=date(2024, 2, 1)),
             Unit(unit_number='A103', rent_amount=40000, status='vacant',
-                 property_id='prop_001'),
+                 property_id=skyline.id),
         ]
         db.session.add_all(units)
         db.session.commit()

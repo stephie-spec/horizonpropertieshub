@@ -10,8 +10,20 @@ from datetime import datetime
 
 
 app = Flask(__name__)
-os.makedirs(os.path.join(app.root_path, "instance"), exist_ok=True)
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.root_path, 'instance', 'horizonpropertieshub.db')}"
+database_url = os.environ.get('DATABASE_URL')
+
+if database_url:
+    # Production (Render PostgreSQL)
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print("Using PostgreSQL on Render")
+else:
+    # Development (SQLite)
+    os.makedirs(os.path.join(app.root_path, "instance"), exist_ok=True)
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.root_path, 'instance', 'horizonpropertieshub.db')}"
+    print("Using SQLite locally")
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
 
