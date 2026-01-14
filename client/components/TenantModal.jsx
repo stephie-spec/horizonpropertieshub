@@ -3,6 +3,21 @@
 import { useState, useEffect } from "react"
 
 export default function TenantModal({ isOpen, tenant, onClose, onSave }) {
+  const [tenants, setTenants] = useState([])
+  //fech tenants
+  const fetchTenants = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:5555/tenants")
+      const data = await res.json()
+      setTenants(data)
+    } catch (err) {
+      console.error("Error fetching tenants:", err)
+    }
+  }
+  useEffect(() => {
+    fetchTenants()
+  }, [])
+
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -32,9 +47,9 @@ export default function TenantModal({ isOpen, tenant, onClose, onSave }) {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    onSave(formData)
+ 
   }
 
   if (!isOpen) return null
