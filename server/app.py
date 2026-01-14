@@ -6,6 +6,7 @@ from models import db, Landlord, Property, Unit, Tenant, Payment
 from sqlalchemy import func
 import os
 from werkzeug.security import check_password_hash, generate_password_hash
+from datetime import datetime
 
 
 app = Flask(__name__)
@@ -82,11 +83,14 @@ class Properties(Resource):
             name=data['name'],
             location=data.get('location'),
             description=data.get('description'),
-            landlord_id=data['landlord_id']
+            landlord_id=int(data['landlord_id'])
         )
         db.session.add(property)
         db.session.commit()
-        return {"message": "Property created", "property": property.to_dict()}, 201
+        return make_response(jsonify({
+                "message": "Property created",
+                "property": property.to_dict()
+            }), 201)
 
     def put(self, property_id):
         property = Property.query.get_or_404(property_id)
@@ -189,7 +193,6 @@ api.add_resource(Tenants, '/tenants', '/tenants/<int:tenant_id>')
 
 
 class Units(Resource):
-   class Units(Resource):
     def get(self, unit_id=None):
 
         if unit_id:
@@ -209,7 +212,7 @@ class Units(Resource):
         # SEARCH FUNCTIONALITY
         if search:
             query = query.filter(
-                Unit.unit_number.ilike(f"%{search}%") | Unit.status.iiike(f"%{search}%")
+                Unit.unit_number.ilike(f"%{search}%") | Unit.status.ilike(f"%{search}%") 
             )
 
         units = query.all()
@@ -220,14 +223,23 @@ class Units(Resource):
 
         
     def post(self):
+        move_in_date = None
+        move_out_date = None
+        
+        if request.form.get('move_in_date'):
+            move_in_date = datetime.strptime(request.form['move_in_date'], '%Y-%m-%d').date()
+        
+        if request.form.get('move_out_date'):
+            move_out_date = datetime.strptime(request.form['move_out_date'], '%Y-%m-%d').date()
+
         unit = Unit(
             unit_number=request.form['unit_number'],
             rent_amount=request.form.get('rent_amount'),
             status=request.form.get('status', 'vacant'),
             tenant_id=request.form.get('tenant_id'),
             property_id=request.form['property_id'],
-            move_in_date=request.form.get('move_in_date'),
-            move_out_date=request.form.get('move_out_date')
+            move_in_date=move_in_date,
+            move_out_date=move_out_date
         )
 
         db.session.add(unit)
@@ -250,8 +262,15 @@ class Units(Resource):
         unit.status = request.form.get('status', unit.status)
         unit.tenant_id = request.form.get('tenant_id', unit.tenant_id)
         unit.property_id = request.form.get('property_id', unit.property_id)
-        unit.move_in_date = request.form.get('move_in_date', unit.move_in_date)
-        unit.move_out_date = request.form.get('move_out_date', unit.move_out_date)
+        if request.form.get('move_in_date'):
+            unit.move_in_date = datetime.strptime(request.form['move_in_date'], '%Y-%m-%d').date()
+        elif 'move_in_date' in request.form and request.form['move_in_date'] == '':  
+            unit.move_in_date = None
+        
+        if request.form.get('move_out_date'):
+            unit.move_out_date = datetime.strptime(request.form['move_out_date'], '%Y-%m-%d').date()
+        elif 'move_out_date' in request.form and request.form['move_out_date'] == '':  
+            unit.move_out_date = None
 
         db.session.commit()
 
@@ -299,8 +318,8 @@ class Payments(Resource):
         data = request.form
 
         payment = Payment(
-            tenant_id=data.get('tenant_id'),
-            amount=data.get('amount'),
+            tenant_id=data['tenant_id'], 
+            amount=data['amount'],
             mpesa_code=data.get('mpesa_code'),
             status='paid'
         )
@@ -441,4 +460,6 @@ api.add_resource(Login, '/login')
 
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(port=5555, debug=True)
