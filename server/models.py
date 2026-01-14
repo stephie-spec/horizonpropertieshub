@@ -1,102 +1,168 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from sqlalchemy_serializer import SerializerMixin
+from datetime import datetime, timezone
 
 db = SQLAlchemy()
 
-class Landlord(db.Model):
+
+class Landlord(db.Model, SerializerMixin):
     __tablename__ = 'landlords'
 
-    id = db.Column(db.String, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    phone = db.Column(db.String, nullable=False)
-    email = db.Column(db.String, nullable=False)
+    serialize_rules = ('-properties.landlord',)
 
-    properties = relationship(
-        'Property',
-        back_populates='landlord',
-        cascade='all, delete-orphan'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    phone = db.Column(db.String, unique=True)
+    email = db.Column(db.String, unique=True, nullable=False)
+    password_hash = db.Column(db.String)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc)
     )
 
-class Property(db.Model):
+    properties = relationship('Property', back_populates='landlord')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "phone": self.phone,
+            "email": self.email,
+            "created_at": self.created_at.isoformat()
+        }
+
+
+class Property(db.Model, SerializerMixin):
     __tablename__ = 'properties'
 
-    id = db.Column(db.String, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    location = db.Column(db.String, nullable=False)
-    units_count = db.Column(db.Integer, nullable=False)
+    serialize_rules = (
+        '-landlord.properties',
+        '-units.property'
+    )
 
-    landlord_id = db.Column(db.String, ForeignKey('landlords.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    location = db.Column(db.String)
+    description = db.Column(db.Text)
+    landlord_id = db.Column(db.Integer, ForeignKey('landlords.id'), nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc)
+    )
+
     landlord = relationship('Landlord', back_populates='properties')
+    units = relationship('Unit', back_populates='property')
 
-    units = relationship(
-        'Unit',
-        back_populates='property',
-        cascade='all, delete-orphan'
-    )
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "location": self.location,
+            "description": self.description,
+            "landlord_id": self.landlord_id,
+            "created_at": self.created_at.isoformat()
+        }
 
-class Unit(db.Model):
-    __tablename__ = 'units'
 
-    id = db.Column(db.String, primary_key=True)
-    unit_number = db.Column(db.String, nullable=False)
-    rent_amount = db.Column(db.Numeric(10, 2), nullable=False)
-    status = db.Column(db.String, nullable=False)
-
-    property_id = db.Column(db.String, ForeignKey('properties.id'), nullable=False)
-    property = relationship('Property', back_populates='units')
-
-    tenants = relationship(
-        'Tenant',
-        back_populates='unit',
-        cascade='all, delete-orphan'
-    )
-
-class Tenant(db.Model):
+class Tenant(db.Model, SerializerMixin):
     __tablename__ = 'tenants'
 
-    id = db.Column(db.String, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    phone = db.Column(db.String, nullable=False)
-    id_number = db.Column(db.String, nullable=False)
-
-    unit_id = db.Column(db.String, ForeignKey('units.id'), nullable=False)
-    move_in_date = db.Column(db.DateTime, default=datetime.utcnow)
-
-    unit = relationship('Unit', back_populates='tenants')
-    tenant_payments = relationship(
-        'TenantPayment',
-        back_populates='tenant',
-        cascade='all, delete-orphan'
+    serialize_rules = (
+        '-units.tenant',
+        '-payments.tenant'
     )
 
-class Payment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    phone = db.Column(db.String, unique=True)
+    id_number = db.Column(db.String, unique=True)
+    email = db.Column(db.String)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc)
+    )
+
+    units = relationship('Unit', back_populates='tenant')
+    payments = relationship('Payment', back_populates='tenant')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "phone": self.phone,
+            "id_number": self.id_number,
+            "email": self.email,
+            "created_at": self.created_at.isoformat()
+        }
+
+
+class Unit(db.Model, SerializerMixin):
+    __tablename__ = 'units'
+
+    serialize_rules = (
+        '-property.units',
+        '-tenant.units'
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    unit_number = db.Column(db.String)
+    rent_amount = db.Column(db.Numeric(10, 2))
+    status = db.Column(db.String, default='vacant')
+    property_id = db.Column(db.Integer, ForeignKey('properties.id'), nullable=False)
+    tenant_id = db.Column(db.Integer, ForeignKey('tenants.id'))
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc)
+    )
+    move_in_date = db.Column(db.Date)
+    move_out_date = db.Column(db.Date)
+
+    property = relationship('Property', back_populates='units')
+    tenant = relationship('Tenant', back_populates='units')
+
+    __table_args__ = (
+        db.UniqueConstraint('property_id', 'unit_number', name='uq_property_unit'),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "unit_number": self.unit_number,
+            "rent_amount": str(self.rent_amount),
+            "status": self.status,
+            "property_id": self.property_id,
+            "tenant_id": self.tenant_id,
+            "created_at": self.created_at.isoformat(),
+            "move_in_date": self.move_in_date.isoformat() if self.move_in_date else None,
+            "move_out_date": self.move_out_date.isoformat() if self.move_out_date else None
+        }
+
+
+class Payment(db.Model, SerializerMixin):
     __tablename__ = 'payments'
 
-    id = db.Column(db.String, primary_key=True)
-    month = db.Column(db.String, nullable=False)
-    year = db.Column(db.Integer, nullable=False)
-    amount = db.Column(db.Numeric(10, 2), nullable=False)
-    mpesa_code = db.Column(db.String, unique=True, nullable=False)
-    paid_date = db.Column(db.DateTime, default=datetime.utcnow)
+    serialize_rules = ('-tenant.payments',)
 
-    tenant_payments = relationship(
-        'TenantPayment',
-        back_populates='payment',
-        cascade='all, delete-orphan'
+    id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, ForeignKey('tenants.id'))
+    amount = db.Column(db.Numeric(10, 2))
+    mpesa_code = db.Column(db.String, unique=True)
+    paid_date = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc)
     )
+    status = db.Column(db.String, default='pending')
 
-class TenantPayment(db.Model):
-    __tablename__ = 'tenant_payments'
+    tenant = relationship('Tenant', back_populates='payments')
 
-    tenant_id = db.Column(db.String, ForeignKey('tenants.id'), primary_key=True)
-    payment_id = db.Column(db.String, ForeignKey('payments.id'), primary_key=True)
-    remarks = db.Column(db.Text)
-
-    tenant = relationship('Tenant', back_populates='tenant_payments')
-    payment = relationship('Payment', back_populates='tenant_payments')
-
-
-
-
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "tenant_id": self.tenant_id,
+            "amount": float(self.amount),
+            "mpesa_code": self.mpesa_code,
+            "status": self.status,
+            "paid_date": self.paid_date.isoformat() if self.paid_date else None
+        }
