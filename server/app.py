@@ -408,5 +408,14 @@ class Login(Resource):
         )
 api.add_resource(Login, '/login')
 
+
+return make_response(
+    jsonify({
+        "message": "Login successful"
+    }),
+    200
+)
+
+
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
