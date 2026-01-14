@@ -49,21 +49,36 @@ export default function Payments() {
     setShowModal(true)
   }
 
-  const handleSavePayment = (formData) => {
-    if (editingPayment) {
-      const index = mockPayments.findIndex((p) => p.id === editingPayment.id)
-      mockPayments[index] = { ...editingPayment, ...formData }
-      toast.success("Payment updated successfully!")
-    } else {
-      const newPayment = {
-        id: Math.max(...mockPayments.map((p) => p.id), 0) + 1,
-        ...formData,
+  const handleSavePayment = async (formData) => {
+    try {
+      if (editingPayment) {
+        const res = await fetch(`${API_URL}/payments/${editingPayment.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        })
+        if (!res.ok) throw new Error("Failed to update payment")
+        const updated = await res.json()
+        setPayments((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+        toast.success("Payment updated successfully!")
+      } else {
+        const res = await fetch(`${API_URL}/payments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        })
+        if (!res.ok) throw new Error("Failed to record payment")
+        const created = await res.json()
+        setPayments((prev) => [...prev, created])
+        toast.success("Payment recorded successfully!")
       }
-      mockPayments.push(newPayment)
-      toast.success("Payment recorded successfully!")
+
+      setShowModal(false)
+      setEditingPayment(null)
+    } catch (error) {
+      console.error("Failed to save payment", error)
+      toast.error("Failed to save payment")
     }
-    setPayments([...mockPayments])
-    setShowModal(false)
   }
 
   const handleDeletePayment = async (id) => {
