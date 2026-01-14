@@ -125,7 +125,6 @@ class Tenants(Resource):
                 Tenant.email.ilike(f'%{search}%') |
                 Tenant.phone.ilike(f'%{search}%')
             )
-
         tenants = query.all()
         return make_response(
             jsonify([t.to_dict() for t in tenants]),
