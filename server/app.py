@@ -380,3 +380,29 @@ class Login(Resource):
             jsonify({"message": "User found"}),
             200
         )
+class Login(Resource):
+    def post(self):
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        if not email or not password:
+            return make_response(
+                jsonify({"error": "Email and password required"}),
+                400
+            )
+
+        landlord = Landlord.query.filter_by(email=email).first()
+
+        if not landlord or landlord.password_hash != password:
+            return make_response(
+                jsonify({"error": "Invalid credentials"}),
+                401
+            )
+
+        return make_response(
+            jsonify({
+                "message": "Login successful",
+                "landlord_id": landlord.id
+            }),
+            200
+        )
