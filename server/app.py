@@ -360,3 +360,18 @@ class Login(Resource):
             }),
             200
         )
+class Login(Resource):
+    def post(self):
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        if not email or not password:
+            return make_response(
+                jsonify({"error": "Email and password required"}),
+                400
+            )
+
+        return make_response(
+            jsonify({"message": "Credentials received"}),
+            200
+        )
