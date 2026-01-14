@@ -4,6 +4,8 @@ from flask_restful import Api, Resource
 from flask_cors import CORS
 from models import db, Landlord, Property, Unit, Tenant, Payment
 import os
+from werkzeug.security import check_password_hash, generate_password_hash
+
 
 app = Flask(__name__)
 os.makedirs(os.path.join(app.root_path, "instance"), exist_ok=True)
@@ -331,43 +333,13 @@ class Payments(Resource):
         )
 api.add_resource(Payments, '/payments', '/payments/<int:payment_id>')
 
-class Login(Resource):
-    pass
-
-class Login(Resource):
+class Logout(Resource):
     def post(self):
-        return make_response(
-            jsonify({"message": "Login endpoint reached"}),
-            200
-        )
+        return {"message": "Logout successful"}, 200
 
-class Login(Resource):
-    def post(self):
-        email = request.form.get('email')
-        password = request.form.get('password')
+api.add_resource(Logout, '/logout')
 
-        return make_response(
-            jsonify({
-                "email": email,
-                "password": password
-            }),
-            200
-        )
-class Login(Resource):
-    def post(self):
-        email = request.form.get('email')
-        password = request.form.get('password')
 
-        if not email or not password:
-            return make_response(
-                jsonify({"error": "Email and password required"}),
-                400
-            )
-
-        return make_response(
-            jsonify({"message": "Credentials received"}),
-            200
-        )
 class Login(Resource):
     def post(self):
         email = request.form.get('email')
@@ -381,30 +353,7 @@ class Login(Resource):
 
         landlord = Landlord.query.filter_by(email=email).first()
 
-        if not landlord:
-            return make_response(
-                jsonify({"error": "Invalid credentials"}),
-                401
-            )
-
-        return make_response(
-            jsonify({"message": "User found"}),
-            200
-        )
-class Login(Resource):
-    def post(self):
-        email = request.form.get('email')
-        password = request.form.get('password')
-
-        if not email or not password:
-            return make_response(
-                jsonify({"error": "Email and password required"}),
-                400
-            )
-
-        landlord = Landlord.query.filter_by(email=email).first()
-
-        if not landlord or landlord.password_hash != password:
+        if not landlord or not check_password_hash(landlord.password_hash, password):
             return make_response(
                 jsonify({"error": "Invalid credentials"}),
                 401
@@ -413,16 +362,11 @@ class Login(Resource):
         return make_response(
             jsonify({
                 "message": "Login successful",
-                "landlord_id": landlord.id
+                "landlord_id": landlord.to_dict()
             }),
             200
         )
-        return make_response(
-    jsonify({
-        "message": "Login successful"
-    }),
-    200
-	)X
+
 api.add_resource(Login, '/login')
 
 )
