@@ -3,6 +3,7 @@ from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
 from models import db, Landlord, Property, Unit, Tenant, Payment
+from sqlalchemy import func
 import os
 
 app = Flask(__name__)
@@ -319,6 +320,63 @@ class Payments(Resource):
             200
         )
 api.add_resource(Payments, '/payments', '/payments/<int:payment_id>')
+
+class DashboardStats(Resource):
+    def get(self):
+        landlord_id = request.args.get('landlord_id', type=int)
+
+        if landlord_id:
+            total_properties = Property.query.filter_by(landlord_id=landlord_id).count()
+            total_units = db.session.query(Unit).join(Property).filter(Property.landlord_id==landlord_id).count()
+            occupied_units = db.session.query(Unit).join(Property).filter(Property.landlord_id==landlord_id, Unit.status=='occupied').count()
+            vacant_units = db.session.query(Unit).join(Property).filter(Property.landlord_id==landlord_id, Unit.status=='vacant').count()
+            total_tenants = db.session.query(Unit.tenant_id).join(Property).filter(Property.landlord_id==landlord_id, Unit.tenant_id != None).distinct().count()
+            payments = db.session.query(Payment).join(Tenant).join(Unit).join(Property).filter(Property.landlord_id==landlord_id).all()
+            total_payments = len(payments)
+            total_revenue = sum([p.amount for p in payments if p.status == 'completed'])
+            all_payments = db.session.query(Payment).join(Tenant).join(Unit).join(Property).filter(Property.landlord_id==landlord_id).all()
+            all_payments_sorted = sorted(all_payments, key=lambda p: p.paid_date, reverse=True)
+            recent_payments_query = all_payments_sorted[:5]
+        
+        else:
+            total_properties = Property.query.count()
+            total_units = Unit.query.count()
+            occupied_units = Unit.query.filter_by(status='occupied').count()
+            vacant_units = Unit.query.filter_by(status='vacant').count()
+            total_tenants = Tenant.query.count()
+            total_payments = Payment.query.count()
+            completed_payments = Payment.query.filter(Payment.status == 'completed').all()
+            total_revenue = sum([p.amount for p in completed_payments]) if completed_payments else 0
+            completed_payments_sorted = sorted(completed_payments, key=lambda p: p.paid_date, reverse=True)
+            recent_payments_query = completed_payments_sorted[:5]
+
+        recent_payments = []
+        for p in recent_payments_query:
+            tenant = Tenant.query.get(p.tenant_id)
+            recent_payments.append({
+                "id": p.id,
+                "tenant_id": p.tenant.id,
+                "tenant_name": tenant.name if tenant else None,
+                "amount": float(p.amount),
+                "paid_date": str(p.paid_date) if p.paid_date else None,
+                "status": p.status
+            })
+
+        stats = {
+            "total_properties": total_properties,
+            "total_units": total_units,
+            "occupied_units": occupied_units,
+            "vacant_units": vacant_units,
+            "total_tenants": total_tenants,
+            "total_payments": total_payments,
+            "total_revenue": float(total_revenue),
+            "recent_payments": recent_payments
+        }
+
+        return make_response(jsonify(stats), 200)
+
+
+api.add_resource(DashboardStats, '/dashboard/stats')
 
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
