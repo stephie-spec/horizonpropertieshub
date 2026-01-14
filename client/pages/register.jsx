@@ -4,6 +4,7 @@ import Link from "next/link"
 import { toast } from "react-toastify"
 
 export default function Register() {
+  const API_URL = "http://localhost:5555"
   const router = useRouter()
   const [formData, setFormData] = useState({
     name: "",
