@@ -13,10 +13,41 @@ export default function Login() {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    setLoading(true)
+const handleSubmit = async (e) => {
+  e.preventDefault()
+  setLoading(true)
+
+  if (!formData.email || !formData.password) {
+    toast.error("Email and password are required")
+    setLoading(false)
+    return
   }
+
+  try {
+    const response = await fetch("http://127.0.0.1:5555/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams(formData),
+    })
+
+    const data = await response.json()
+
+    if (response.ok) {
+      localStorage.setItem("landlord", JSON.stringify(data))
+      toast.success("Login successful")
+      router.push("/dashboard")
+    } else {
+      toast.error(data.error || "Login failed")
+    }
+  } catch (error) {
+    toast.error("Server error")
+  }
+
+  setLoading(false)
+}
+
 toast.info("Login clicked")
 setLoading(false)
 
