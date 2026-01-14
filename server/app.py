@@ -327,3 +327,28 @@ if __name__ == "__main__":
     app.run(port=5555, debug=True)
 
 
+class Login(Resource):
+    def post(self):
+        return make_response(
+            jsonify({"message": "Login endpoint reached"}),
+            200
+        )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    app.run(port=5555, debug=True)
