@@ -407,3 +407,6 @@ class Login(Resource):
             200
         )
 api.add_resource(Login, '/login')
+
+if __name__ == "__main__":
+    app.run(port=5555, debug=True)
