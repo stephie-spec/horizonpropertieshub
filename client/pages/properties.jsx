@@ -36,25 +36,31 @@ export default function Properties() {
     setEditingProperty(property)
     setShowModal(true)
   }
-
-  const handleSaveProperty = (formData) => {
-    if (editingProperty) {
-      const index = mockProperties.findIndex((p) => p.id === editingProperty.id)
-      mockProperties[index] = { ...editingProperty, ...formData }
-      toast.success("Property updated successfully!")
-    } else {
-      const newProperty = {
-        id: Math.max(...mockProperties.map((p) => p.id), 0) + 1,
-        ...formData,
-        landlord_id: landlord.id,
-        created_at: new Date().toISOString(),
-      }
-      mockProperties.push(newProperty)
-      toast.success("Property added successfully!")
-    }
-    setProperties(mockProperties.filter((p) => p.landlord_id === landlord.id))
-    setShowModal(false)
+  //save/ update
+  const handleSaveProperty = async (formData) => {
+  let url = "http://127.0.0.1:5555/properties"
+  let method = "POST"
+  if (editingProperty) {
+    url = `http://127.0.0.1:5555/properties/${editingProperty.id}`
+    method = "PUT"
   }
+
+  const response = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...formData, landlord_id: landlord.id }),
+  })
+  const savedProperty = await response.json()
+
+  setProperties((prev) =>
+    editingProperty
+      ? prev.map((p) => (p.id === savedProperty.id ? savedProperty : p))
+      : [...prev, savedProperty]
+  )
+  setShowModal(false)
+}
+
+  
 
   const handleDeleteProperty = (id) => {
     const index = mockProperties.findIndex((p) => p.id === id)
