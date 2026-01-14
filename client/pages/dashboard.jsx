@@ -105,7 +105,7 @@ const recentPayments = payments.slice(-5).reverse()
               </thead>
               <tbody>
                 {recentPayments.map((payment) => {
-                  const tenant = mockTenants.find((t) => t.id === payment.tenant_id)
+                  const tenant = tenants.find((t) => t.id === payment.tenant_id)
                   return (
                     <tr key={payment.id} className="border-b border-gray-200 hover:bg-gray-50">
                       <td className="px-6 py-4 text-sm text-gray-900">{tenant?.name || "Unknown"}</td>
