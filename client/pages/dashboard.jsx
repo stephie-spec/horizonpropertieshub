@@ -9,6 +9,10 @@ export default function Dashboard() {
   const [landlord, setLandlord] = useState(null)
   const [tenants, setTenants] = useState([])
   const [payments, setPayments] = useState([])
+  const [deleteId, setDeleteId] = useState(null)
+  const [properties, setProperties] = useState([])
+  const [units, setUnits] = useState([])
+
   const [dashboardStats, setDashboardStats] = useState(null)
 
   const API_URL = "http://localhost:5555"
@@ -33,6 +37,17 @@ export default function Dashboard() {
       .then((data) => setTenants(data))
       .catch((err) => console.error("Failed to fetch tenants", err))
   }, [])
+  useEffect(() => {
+  fetch(`${API_URL}/properties`)
+    .then((res) => res.json())
+    .then((data) => setProperties(data))
+    .catch((err) => console.error("Failed to fetch properties", err))
+
+  fetch(`${API_URL}/units`)
+    .then((res) => res.json())
+    .then((data) => setUnits(data))
+    .catch((err) => console.error("Failed to fetch units", err))
+}, [])
 
 const fetchPayments = async () => {
   try {
@@ -61,6 +76,20 @@ const fetchDashboardStats = async (landlordId) => {
 
   if (!landlord) return null
 
+//   const totalProperties = properties.filter(
+//   (p) => p.landlord_id === landlord.id
+// ).length
+
+// const totalUnits = units.length
+
+// const occupiedUnits = units.filter(
+//   (u) => u.tenant_id !== null
+// ).length
+
+//   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
+//   const totalRevenue = payments
+//   .filter((p) => p.status === "completed")
+//   .reduce((sum, p) => sum + p.amount, 0)
 
   const totalProperties = dashboardStats?.total_properties || 0
 const totalUnits = dashboardStats?.total_units || 0
