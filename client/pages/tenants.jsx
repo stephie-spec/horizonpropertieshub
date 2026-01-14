@@ -15,6 +15,8 @@ export default function Tenants() {
   const [editingTenant, setEditingTenant] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [saving, setSaving] = useState(false)
+
   //fetch
   useEffect(() => {
     const storedLandlord = JSON.parse(localStorage.getItem("landlord"))
