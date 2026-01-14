@@ -20,7 +20,10 @@ export default function Properties() {
     } else {
       const userData = JSON.parse(user)
       setLandlord(userData)
-      setProperties(mockProperties.filter((p) => p.landlord_id === userData.id))
+      fetch(`http://127.0.0.1:5555/properties?landlord_id=${userData.id}`)
+      .then(res => res.json())
+      .then(data => setProperties(data))
+      .catch(err => console.error("Failed to fetch properties:", err))
     }
   }, [router])
 
