@@ -2,7 +2,6 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Layout from "../components/Layout"
 import PropertyModal from "../components/PropertyModal"
-import { mockProperties } from "../lib/mockData"
 import { toast } from "react-toastify"
 
 export default function Properties() {
@@ -14,51 +13,73 @@ export default function Properties() {
   const [deleteId, setDeleteId] = useState(null)
 
   useEffect(() => {
-    const user = localStorage.getItem("landlord")
-    if (!user) {
-      router.push("/login")
-    } else {
-      const userData = JSON.parse(user)
-      setLandlord(userData)
-      setProperties(mockProperties.filter((p) => p.landlord_id === userData.id))
-    }
-  }, [router])
+  const storedLandlord = JSON.parse(localStorage.getItem("landlord"))
+  if (!storedLandlord) {
+    router.push("/login")
+    return
+  }
+
+  setLandlord(storedLandlord)
+
+  fetch(`http://127.0.0.1:5555/properties?landlord_id=${storedLandlord.id}`)
+    .then(res => res.json())
+    .then(data => setProperties(data))
+    .catch(err => console.error("Failed to fetch properties:", err))
+}, [router])
 
   const handleAddProperty = () => {
-    setEditingProperty(null)
-    setShowModal(true)
-  }
+  setEditingProperty(null)
+  setShowModal(true)
+}
 
   const handleEditProperty = (property) => {
     setEditingProperty(property)
     setShowModal(true)
   }
+  //save/ update
+  const handleSaveProperty = async (formData) => {
+    let url = "http://127.0.0.1:5555/properties"
+    let method = "POST"
 
-  const handleSaveProperty = (formData) => {
     if (editingProperty) {
-      const index = mockProperties.findIndex((p) => p.id === editingProperty.id)
-      mockProperties[index] = { ...editingProperty, ...formData }
-      toast.success("Property updated successfully!")
-    } else {
-      const newProperty = {
-        id: Math.max(...mockProperties.map((p) => p.id), 0) + 1,
-        ...formData,
-        landlord_id: landlord.id,
-        created_at: new Date().toISOString(),
-      }
-      mockProperties.push(newProperty)
-      toast.success("Property added successfully!")
+      url = `http://127.0.0.1:5555/properties/${editingProperty.id}`
+      method = "PUT"
     }
-    setProperties(mockProperties.filter((p) => p.landlord_id === landlord.id))
+
+    const data = new FormData()
+
+    data.append("name", formData.name)
+    data.append("location", formData.location)
+    data.append("description", formData.description)
+    data.append("landlord_id", landlord.id)
+
+    const response = await fetch(url, {
+      method,
+      body: data,
+    })
+
+    if (!response.ok) {
+      console.error("Failed to save property")
+      return
+    }
+
+    const savedProperty = await response.json()
+
+    setProperties((prev) =>
+      editingProperty
+        ? prev.map((p) => (p.id === savedProperty.id ? savedProperty : p))
+        : [...prev, savedProperty]
+    )
+    setEditingProperty(null)
     setShowModal(false)
   }
 
-  const handleDeleteProperty = (id) => {
-    const index = mockProperties.findIndex((p) => p.id === id)
-    mockProperties.splice(index, 1)
-    toast.success("Property deleted successfully!")
-    setProperties(mockProperties.filter((p) => p.landlord_id === landlord.id))
-    setDeleteId(null)
+
+  const handleDeleteProperty = async (id) => {
+    const response = await fetch(`http://127.0.0.1:5555/properties/${id}`, { method: "DELETE" })
+    if (response.ok) {
+      setProperties(properties.filter((p) => p.id !== id))
+    }
   }
 
   if (!landlord) return null

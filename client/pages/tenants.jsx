@@ -2,7 +2,6 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Layout from "../components/Layout"
 import TenantModal from "../components/TenantModal"
-import { mockTenants, mockUnits } from "../lib/mockData"
 import { toast } from "react-toastify"
 
 export default function Tenants() {
@@ -14,15 +13,15 @@ export default function Tenants() {
   const [deleteId, setDeleteId] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
 
-  useEffect(() => {
-    const user = localStorage.getItem("landlord")
-    if (!user) {
-      router.push("/login")
-    } else {
-      setLandlord(JSON.parse(user))
-      setTenants(mockTenants)
-    }
-  }, [router])
+ useEffect(() => {
+  const landlord = JSON.parse(localStorage.getItem("landlord"))
+  if (!landlord) return
+
+  fetch(`http://127.0.0.1:5555/tenants?landlord_id=${landlord.id}`)
+    .then(res => res.json())
+    .then(data => setTenants(data))
+}, [])
+
 
   const handleAddTenant = () => {
     setEditingTenant(null)

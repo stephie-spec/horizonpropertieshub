@@ -2,30 +2,97 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Link from "next/link"
 import Layout from "../components/Layout"
-import { mockProperties, mockUnits, mockTenants, mockPayments } from "../lib/mockData"
+import { mockProperties, mockUnits } from "../lib/mockData"
 
 export default function Dashboard() {
   const router = useRouter()
   const [landlord, setLandlord] = useState(null)
+  const [tenants, setTenants] = useState([])
+  const [payments, setPayments] = useState([])
+  const [deleteId, setDeleteId] = useState(null)
 
+  const [dashboardStats, setDashboardStats] = useState(null)
+
+  const API_URL = "http://localhost:5555"
+
+
+  
   useEffect(() => {
     const user = localStorage.getItem("landlord")
     if (!user) {
       router.push("/login")
     } else {
+      const parsedUser = JSON.parse(user)
       setLandlord(JSON.parse(user))
+      fetchDashboardStats(parsedUser.id) 
     }
   }, [router])
 
+  // Fetch tenants data from backend
+  useEffect(() => {
+    fetch(`${API_URL}/tenants`)
+      .then((res) => res.json())
+      .then((data) => setTenants(data))
+      .catch((err) => console.error("Failed to fetch tenants", err))
+  }, [])
+const fetchPayments = async () => {
+  try {
+    const res = await fetch(`${API_URL}/payments`)
+    if (!res.ok) throw new Error("Failed to fetch payments")
+
+    const data = await res.json()
+    setPayments(data)
+  } catch (error) {
+    console.error("Failed to load payments", error)
+  }
+}
+
+const fetchDashboardStats = async (landlordId) => {
+  try {
+    const res = await fetch(`${API_URL}/dashboard/stats?landlord_id=${landlordId}`)
+    if (!res.ok) throw new Error("Failed to fetch dashboard stats")
+    
+    const data = await res.json()
+    setDashboardStats(data) 
+  } catch (error) {
+    console.error("Failed to load dashboard stats", error)
+  }
+}
+
+
   if (!landlord) return null
 
-  const totalProperties = mockProperties.filter((p) => p.landlord_id === landlord.id).length
-  const totalUnits = mockUnits.length
-  const occupiedUnits = mockUnits.filter((u) => u.tenant_id !== null).length
-  const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
-  const totalRevenue = mockPayments.filter((p) => p.status === "completed").reduce((sum, p) => sum + p.amount, 0)
+//   const totalProperties = mockProperties.filter((p) => p.landlord_id === landlord.id).length
+//   const totalUnits = mockUnits.length
+//   const occupiedUnits = mockUnits.filter((u) => u.tenant_id !== null).length
+//   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
+//   const totalRevenue = payments
+//   .filter((p) => p.status === "completed")
+//   .reduce((sum, p) => sum + p.amount, 0)
+  
+//   const totalProperties = properties.filter(
+//   (p) => p.landlord_id === landlord.id
+// ).length
 
-  const recentPayments = mockPayments.slice(-5).reverse()
+// const totalUnits = units.length
+
+// const occupiedUnits = units.filter(
+//   (u) => u.tenant_id !== null
+// ).length
+
+//   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
+//   const totalRevenue = payments
+//   .filter((p) => p.status === "completed")
+//   .reduce((sum, p) => sum + p.amount, 0)
+
+  const totalProperties = dashboardStats?.total_properties || 0
+const totalUnits = dashboardStats?.total_units || 0
+const occupiedUnits = dashboardStats?.occupied_units || 0
+const occupancyRate = dashboardStats?.total_units > 0 
+  ? Math.round((dashboardStats.occupied_units / dashboardStats.total_units) * 100) 
+  : 0
+const totalRevenue = dashboardStats?.total_revenue || 0
+const recentPayments = dashboardStats?.recent_payments || []
 
   return (
     <Layout>
@@ -74,6 +141,7 @@ export default function Dashboard() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
+                  <th className="px-6 py-3">Tenants</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Tenant</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Amount</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
@@ -82,7 +150,7 @@ export default function Dashboard() {
               </thead>
               <tbody>
                 {recentPayments.map((payment) => {
-                  const tenant = mockTenants.find((t) => t.id === payment.tenant_id)
+                  const tenant = tenants.find((t) => t.id === payment.tenant_id)
                   return (
                     <tr key={payment.id} className="border-b border-gray-200 hover:bg-gray-50">
                       <td className="px-6 py-4 text-sm text-gray-900">{tenant?.name || "Unknown"}</td>
@@ -91,12 +159,13 @@ export default function Dashboard() {
                         {new Date(payment.paid_date).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${payment.status === "completed" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}
+                        <button
+                          onClick={() => setDeleteId(payment.id)}
+                          className="text-red-600 hover:text-red-800"
                         >
-                          {payment.status}
-                        </span>
-                      </td>
+                          Delete
+                        </button>
+                      </td> 
                     </tr>
                   )
                 })}
