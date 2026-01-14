@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useRouter } from "next/router"
 import Link from "next/link"
 import { toast } from "react-toastify"
-import { mockLandlords } from "../lib/mockData"
+
 
 export default function Login() {
   const router = useRouter()
