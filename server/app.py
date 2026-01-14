@@ -406,3 +406,4 @@ class Login(Resource):
             }),
             200
         )
+api.add_resource(Login, '/login')
