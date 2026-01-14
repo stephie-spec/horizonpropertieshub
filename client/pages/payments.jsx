@@ -15,7 +15,7 @@ export default function Payments() {
   const [editingPayment, setEditingPayment] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
   const [filterStatus, setFilterStatus] = useState("")
-  
+
   const API_URL = "http://localhost:5555"
 
 
@@ -52,49 +52,75 @@ export default function Payments() {
   const handleSavePayment = async (formData) => {
     try {
       if (editingPayment) {
-        const res = await fetch(`${API_URL}/payments/${editingPayment.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+        const response = await fetch(
+          `${API_URL}/payments/${editingPayment.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          }
+        )
+
+        if (!response.ok) {
+          throw new Error("Update failed")
+        }
+
+        const updatedPayment = await response.json()
+        const newPayments = payments.map((payment) => {
+          if (payment.id === updatedPayment.id) {
+            return updatedPayment
+          }
+          return payment
         })
-        if (!res.ok) throw new Error("Failed to update payment")
-        const updated = await res.json()
-        setPayments((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+
+        setPayments(newPayments)
         toast.success("Payment updated successfully!")
       } else {
-        const res = await fetch(`${API_URL}/payments`, {
+        const response = await fetch(`${API_URL}/payments`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify(formData),
         })
-        if (!res.ok) throw new Error("Failed to record payment")
-        const created = await res.json()
-        setPayments((prev) => [...prev, created])
+
+        if (!response.ok) {
+          throw new Error("Create failed")
+        }
+
+        const newPayment = await response.json()
+
+        setPayments([...payments, newPayment])
         toast.success("Payment recorded successfully!")
       }
 
       setShowModal(false)
       setEditingPayment(null)
     } catch (error) {
-      console.error("Failed to save payment", error)
-      toast.error("Failed to save payment")
+      console.error("Failed to save payment:", error)
+      alert("Failed to save payment")
     }
   }
 
+
   const handleDeletePayment = async (id) => {
-  try {
-    const res = await fetch(`${API_URL}/payments/${id}`, {
-      method: "DELETE",
-    })
+    try {
+      const res = await fetch(`${API_URL}/payments/${id}`, {
+        method: "DELETE",
+      })
 
-    if (!res.ok) throw new Error("Delete failed")
+      if (!res.ok) throw new Error("Delete failed")
 
-    setPayments(payments.filter((p) => p.id !== id))
-    setDeleteId(null)
-  } catch (error) {
-    console.error("Failed to delete payment", error)
+      setPayments((prev) => prev.filter((p) => p.id !== id))
+      setDeleteId(null)
+      toast.success("Payment deleted")
+    } catch (error) {
+      console.error("Failed to delete payment", error)
+      alert("Failed to delete payment")
+    }
   }
-}
 
   if (!landlord) return null
 
