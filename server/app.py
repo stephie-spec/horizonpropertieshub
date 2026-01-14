@@ -283,7 +283,6 @@ class Units(Resource):
 
 api.add_resource(Units, '/units', '/units/<int:unit_id>')
 
-
 # Payments
 class Payments(Resource):
     def get(self, payment_id=None):
@@ -382,8 +381,6 @@ class Login(Resource):
         )
 
 api.add_resource(Login, '/login')
-
-)
 
 
 if __name__ == "__main__":

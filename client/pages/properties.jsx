@@ -2,7 +2,6 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Layout from "../components/Layout"
 import PropertyModal from "../components/PropertyModal"
-import { mockProperties } from "../lib/mockData"
 import { toast } from "react-toastify"
 
 export default function Properties() {
@@ -14,23 +13,24 @@ export default function Properties() {
   const [deleteId, setDeleteId] = useState(null)
 
   useEffect(() => {
-    const user = localStorage.getItem("landlord")
-    if (!user) {
-      router.push("/login")
-    } else {
-      const userData = JSON.parse(user)
-      setLandlord(userData)
-      fetch(`http://127.0.0.1:5555/properties?landlord_id=${userData.id}`)
-        .then(res => res.json())
-        .then(data => setProperties(data))
-        .catch(err => console.error("Failed to fetch properties:", err))
-    }
-  }, [router])
+  const storedLandlord = JSON.parse(localStorage.getItem("landlord"))
+  if (!storedLandlord) {
+    router.push("/login")
+    return
+  }
+
+  setLandlord(storedLandlord)
+
+  fetch(`http://127.0.0.1:5555/properties?landlord_id=${storedLandlord.id}`)
+    .then(res => res.json())
+    .then(data => setProperties(data))
+    .catch(err => console.error("Failed to fetch properties:", err))
+}, [router])
 
   const handleAddProperty = () => {
-    setEditingProperty(null)
-    setShowModal(true)
-  }
+  setEditingProperty(null)
+  setShowModal(true)
+}
 
   const handleEditProperty = (property) => {
     setEditingProperty(property)
@@ -40,16 +40,29 @@ export default function Properties() {
   const handleSaveProperty = async (formData) => {
     let url = "http://127.0.0.1:5555/properties"
     let method = "POST"
+
     if (editingProperty) {
       url = `http://127.0.0.1:5555/properties/${editingProperty.id}`
       method = "PUT"
     }
 
+    const data = new FormData()
+
+    data.append("name", formData.name)
+    data.append("location", formData.location)
+    data.append("description", formData.description)
+    data.append("landlord_id", landlord.id)
+
     const response = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...formData, landlord_id: landlord.id }),
+      body: data,
     })
+
+    if (!response.ok) {
+      console.error("Failed to save property")
+      return
+    }
+
     const savedProperty = await response.json()
 
     setProperties((prev) =>
@@ -57,6 +70,7 @@ export default function Properties() {
         ? prev.map((p) => (p.id === savedProperty.id ? savedProperty : p))
         : [...prev, savedProperty]
     )
+    setEditingProperty(null)
     setShowModal(false)
   }
 
@@ -67,8 +81,6 @@ export default function Properties() {
       setProperties(properties.filter((p) => p.id !== id))
     }
   }
-
-
 
   if (!landlord) return null
 
