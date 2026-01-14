@@ -209,9 +209,7 @@ class Units(Resource):
         # SEARCH FUNCTIONALITY
         if search:
             query = query.filter(
-                Unit.name.ilike(f"%{search}%") |
                 Unit.unit_number.ilike(f"%{search}%") |
-                Unit.description.ilike(f"%{search}%")
             )
 
         units = query.all()
@@ -382,7 +380,7 @@ class DashboardStats(Resource):
             tenant = Tenant.query.get(p.tenant_id)
             recent_payments.append({
                 "id": p.id,
-                "tenant_id": p.tenant.id,
+                "tenant_id": p.tenant_id,
                 "tenant_name": tenant.name if tenant else None,
                 "amount": float(p.amount),
                 "paid_date": str(p.paid_date) if p.paid_date else None,

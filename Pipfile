@@ -12,6 +12,8 @@ importlib-resources = "*"
 sqlalchemy-serializer = "*"
 flask-restful = "*"
 flask-cors = "*"
+gunicorn = "*"  
+werkzeug = "*"
 
 [dev-packages]
 
