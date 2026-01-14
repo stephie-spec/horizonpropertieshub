@@ -8,20 +8,24 @@ export default function Dashboard() {
   const router = useRouter()
   const [landlord, setLandlord] = useState(null)
   const [tenants, setTenants] = useState([])
-
   const [payments, setPayments] = useState([])
-  const [deleteId, setDeleteId] = useState(null)
+  const [dashboardStats, setDashboardStats] = useState(null)
 
   const API_URL = "http://localhost:5555"
+
+
+  
   useEffect(() => {
     const user = localStorage.getItem("landlord")
     if (!user) {
       router.push("/login")
     } else {
+      const parsedUser = JSON.parse(user)
       setLandlord(JSON.parse(user))
-      fetchPayments()
+      fetchDashboardStats(parsedUser.id) 
     }
   }, [router])
+
   // Fetch tenants data from backend
   useEffect(() => {
     fetch(`${API_URL}/tenants`)
@@ -29,6 +33,7 @@ export default function Dashboard() {
       .then((data) => setTenants(data))
       .catch((err) => console.error("Failed to fetch tenants", err))
   }, [])
+
 const fetchPayments = async () => {
   try {
     const res = await fetch(`${API_URL}/payments`)
@@ -40,33 +45,31 @@ const fetchPayments = async () => {
     console.error("Failed to load payments", error)
   }
 }
-const handleDeletePayment = async (id) => {
+
+const fetchDashboardStats = async (landlordId) => {
   try {
-    const res = await fetch(`${API_URL}/payments/${id}`, {
-      method: "DELETE",
-    })
-
-    if (!res.ok) throw new Error("Delete failed")
-
-    setPayments(payments.filter((p) => p.id !== id))
-    setDeleteId(null)
+    const res = await fetch(`${API_URL}/dashboard/stats?landlord_id=${landlordId}`)
+    if (!res.ok) throw new Error("Failed to fetch dashboard stats")
+    
+    const data = await res.json()
+    setDashboardStats(data) 
   } catch (error) {
-    console.error("Failed to delete payment", error)
+    console.error("Failed to load dashboard stats", error)
   }
 }
 
 
   if (!landlord) return null
 
-  const totalProperties = mockProperties.filter((p) => p.landlord_id === landlord.id).length
-  const totalUnits = mockUnits.length
-  const occupiedUnits = mockUnits.filter((u) => u.tenant_id !== null).length
-  const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
-  const totalRevenue = payments
-  .filter((p) => p.status === "completed")
-  .reduce((sum, p) => sum + p.amount, 0)
 
-const recentPayments = payments.slice(-5).reverse()
+  const totalProperties = dashboardStats?.total_properties || 0
+const totalUnits = dashboardStats?.total_units || 0
+const occupiedUnits = dashboardStats?.occupied_units || 0
+const occupancyRate = dashboardStats?.total_units > 0 
+  ? Math.round((dashboardStats.occupied_units / dashboardStats.total_units) * 100) 
+  : 0
+const totalRevenue = dashboardStats?.total_revenue || 0
+const recentPayments = dashboardStats?.recent_payments || []
 
   return (
     <Layout>
@@ -115,7 +118,7 @@ const recentPayments = payments.slice(-5).reverse()
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3">Actions</th>
+                  <th className="px-6 py-3">Tenants</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Tenant</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Amount</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
