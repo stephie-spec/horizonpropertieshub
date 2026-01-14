@@ -105,20 +105,31 @@ api.add_resource(Properties, '/properties', '/properties/<int:property_id>')
 
 class Tenants(Resource):
     def get(self, tenant_id=None):
+
         if tenant_id:
             tenant = Tenant.query.get_or_404(tenant_id)
-            response = make_response(
+            return make_response(
                 jsonify(tenant.to_dict()),
-                200,
+                200
             )
-            return response
-        else:
-            tenants = Tenant.query.all()
-            response = make_response(
-                jsonify([t.to_dict() for t in tenants]),
-                200,
+
+        # SEARCH TENANTS FUNCTIONALITY
+        search = request.args.get('search')
+        query = Tenant.query
+
+        if search:
+            query = query.filter(
+                Tenant.name.ilike(f'%{search}%') |
+                Tenant.email.ilike(f'%{search}%') |
+                Tenant.phone.ilike(f'%{search}%')
             )
-            return response
+
+        tenants = query.all()
+        return make_response(
+            jsonify([t.to_dict() for t in tenants]),
+            200
+        )
+
         
     def post(self):
         tenant = Tenant(
