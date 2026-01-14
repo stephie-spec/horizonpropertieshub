@@ -4,6 +4,8 @@ from flask_restful import Api, Resource
 from flask_cors import CORS
 from models import db, Landlord, Property, Unit, Tenant, Payment
 import os
+from werkzeug.security import check_password_hash, generate_password_hash
+
 
 app = Flask(__name__)
 os.makedirs(os.path.join(app.root_path, "instance"), exist_ok=True)
@@ -105,20 +107,31 @@ api.add_resource(Properties, '/properties', '/properties/<int:property_id>')
 
 class Tenants(Resource):
     def get(self, tenant_id=None):
+
         if tenant_id:
             tenant = Tenant.query.get_or_404(tenant_id)
-            response = make_response(
+            return make_response(
                 jsonify(tenant.to_dict()),
-                200,
+                200
             )
-            return response
-        else:
-            tenants = Tenant.query.all()
-            response = make_response(
-                jsonify([t.to_dict() for t in tenants]),
-                200,
+
+        # SEARCH TENANTS FUNCTIONALITY
+        search = request.args.get('search')
+        query = Tenant.query
+
+        if search:
+            query = query.filter(
+                Tenant.name.ilike(f'%{search}%') |
+                Tenant.email.ilike(f'%{search}%') |
+                Tenant.phone.ilike(f'%{search}%')
             )
-            return response
+
+        tenants = query.all()
+        return make_response(
+            jsonify([t.to_dict() for t in tenants]),
+            200
+        )
+
         
     def post(self):
         tenant = Tenant(
@@ -327,7 +340,37 @@ class Logout(Resource):
 api.add_resource(Logout, '/logout')
 
 
+class Login(Resource):
+    def post(self):
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        if not email or not password:
+            return make_response(
+                jsonify({"error": "Email and password required"}),
+                400
+            )
+
+        landlord = Landlord.query.filter_by(email=email).first()
+
+        if not landlord or not check_password_hash(landlord.password_hash, password):
+            return make_response(
+                jsonify({"error": "Invalid credentials"}),
+                401
+            )
+
+        return make_response(
+            jsonify({
+                "message": "Login successful",
+                "landlord_id": landlord.to_dict()
+            }),
+            200
+        )
+
+api.add_resource(Login, '/login')
+
+)
+
+
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
-
-
