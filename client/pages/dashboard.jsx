@@ -4,6 +4,8 @@ import Link from "next/link"
 import Layout from "../components/Layout"
 import { mockProperties, mockUnits } from "../lib/mockData"
 const [payments, setPayments] = useState([])
+const [deleteId, setDeleteId] = useState(null)
+
 const API_URL = "http://localhost:5555"
 export default function Dashboard() {
   const router = useRouter()
@@ -37,6 +39,21 @@ const fetchPayments = async () => {
     console.error("Failed to load payments", error)
   }
 }
+const handleDeletePayment = async (id) => {
+  try {
+    const res = await fetch(`${API_URL}/payments/${id}`, {
+      method: "DELETE",
+    })
+
+    if (!res.ok) throw new Error("Delete failed")
+
+    setPayments(payments.filter((p) => p.id !== id))
+    setDeleteId(null)
+  } catch (error) {
+    console.error("Failed to delete payment", error)
+  }
+}
+
 
   if (!landlord) return null
 
