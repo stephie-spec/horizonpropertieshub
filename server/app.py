@@ -2,6 +2,7 @@ from flask import Flask, request, make_response, jsonify
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
+from werkzeug.security import generate_password_hash
 from models import db, Landlord, Property, Unit, Tenant, Payment, TenantPayment
 import os
 
@@ -27,6 +28,118 @@ class Home(Resource):
 
 api.add_resource(Home, '/')
 
+class LandlordList(Resource):
+    def get(self, landlord_id=None):
+        if landlord_id:
+            landlord = Landlord.query.get_or_404(landlord_id)
+            return make_response(jsonify(landlord.to_dict()), 200)
+
+        landlords = Landlord.query.all()
+        return make_response(jsonify([l.to_dict() for l in landlords]), 200)
+
+    def post(self):
+        name = request.form.get('name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        password = request.form.get('password')  
+
+        if not name or not email:
+            return make_response(jsonify({"error": "Name and email are required"}), 400)
+
+        landlord = Landlord(
+            name=name,
+            email=email,
+            phone=phone,
+            password_hash=generate_password_hash(password) if password else None
+        )
+
+        db.session.add(landlord)
+        db.session.commit()
+
+        return make_response(jsonify({
+            "message": "Landlord created successfully",
+            "landlord": landlord.to_dict()
+        }), 201)
+
+    def put(self, landlord_id):
+        landlord = Landlord.query.get_or_404(landlord_id)
+        landlord.name = request.form.get('name', landlord.name)
+        landlord.phone = request.form.get('phone', landlord.phone)
+        landlord.email = request.form.get('email', landlord.email)
+
+        db.session.commit()
+        return make_response(jsonify({
+            "message": "Landlord updated successfully",
+            "landlord": landlord.to_dict()
+        }), 200)
+
+    def delete(self, landlord_id):
+        landlord = Landlord.query.get_or_404(landlord_id)
+        db.session.delete(landlord)
+        db.session.commit()
+        return make_response(jsonify({"message": "Landlord deleted successfully"}), 200)
+
+
+api.add_resource(LandlordList, '/landlords', '/landlords/<int:landlord_id>')
+
+
+class Properties(Resource):
+    def get(self, property_id=None):
+        if property_id:
+            prop = Property.query.get_or_404(property_id)
+            return make_response(jsonify(prop.to_dict()), 200)
+
+        props = Property.query.all()
+        return make_response(jsonify([p.to_dict() for p in props]), 200)
+
+    def post(self):
+        name = request.form.get('name')
+        location = request.form.get('location')
+        description = request.form.get('description')
+        landlord_id = request.form.get('landlord_id')
+
+        if not landlord_id or not Landlord.query.get(int(landlord_id)):
+            return make_response(jsonify({"error": "Valid landlord_id is required"}), 400)
+
+        prop = Property(
+            name=name,
+            location=location,
+            description=description,
+            landlord_id=int(landlord_id)
+        )
+
+        db.session.add(prop)
+        db.session.commit()
+        return make_response(jsonify({
+            "message": "Property created successfully",
+            "property": prop.to_dict()
+        }), 201)
+
+    def put(self, property_id):
+        prop = Property.query.get_or_404(property_id)
+        prop.name = request.form.get('name', prop.name)
+        prop.location = request.form.get('location', prop.location)
+        prop.description = request.form.get('description', prop.description)
+        landlord_id = request.form.get('landlord_id')
+        if landlord_id:
+            prop.landlord_id = int(landlord_id)
+
+        db.session.commit()
+        return make_response(jsonify({
+            "message": "Property updated successfully",
+            "property": prop.to_dict()
+        }), 200)
+
+    def delete(self, property_id):
+        prop = Property.query.get_or_404(property_id)
+        db.session.delete(prop)
+        db.session.commit()
+        return make_response(jsonify({"message": "Property deleted successfully"}), 200)
+
+
+api.add_resource(Properties, '/properties', '/properties/<int:property_id>')
+
+
 class Tenants(Resource):
     def get(self, tenant_id=None):
         if tenant_id:
@@ -43,7 +156,7 @@ class Tenants(Resource):
                 200,
             )
             return response
-        
+       
     def post(self):
         tenant = Tenant(
             id=request.form['id'],
