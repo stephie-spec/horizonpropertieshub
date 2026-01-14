@@ -114,6 +114,7 @@ const recentPayments = payments.slice(-5).reverse()
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
+                  <th className="px-6 py-3">Actions</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Tenant</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Amount</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
@@ -131,12 +132,13 @@ const recentPayments = payments.slice(-5).reverse()
                         {new Date(payment.paid_date).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${payment.status === "completed" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}
+                        <button
+                          onClick={() => setDeleteId(payment.id)}
+                          className="text-red-600 hover:text-red-800"
                         >
-                          {payment.status}
-                        </span>
-                      </td>
+                          Delete
+                        </button>
+                      </td> 
                     </tr>
                   )
                 })}
