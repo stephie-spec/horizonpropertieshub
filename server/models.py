@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 db = SQLAlchemy()
 
-
+#Landlord Model
 class Landlord(db.Model, SerializerMixin):
     __tablename__ = 'landlords'
 
@@ -33,7 +33,7 @@ class Landlord(db.Model, SerializerMixin):
             "created_at": self.created_at.isoformat()
         }
 
-
+#Property Model
 class Property(db.Model, SerializerMixin):
     __tablename__ = 'properties'
 
@@ -65,7 +65,7 @@ class Property(db.Model, SerializerMixin):
             "created_at": self.created_at.isoformat()
         }
 
-
+#Tenannt model
 class Tenant(db.Model, SerializerMixin):
     __tablename__ = 'tenants'
 
@@ -98,6 +98,7 @@ class Tenant(db.Model, SerializerMixin):
         }
 
 
+#Unit model
 class Unit(db.Model, SerializerMixin):
     __tablename__ = 'units'
 
@@ -139,7 +140,7 @@ class Unit(db.Model, SerializerMixin):
             "move_out_date": self.move_out_date.isoformat() if self.move_out_date else None
         }
 
-
+#Payment model
 class Payment(db.Model, SerializerMixin):
     __tablename__ = 'payments'
 
