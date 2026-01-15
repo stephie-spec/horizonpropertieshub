@@ -12,7 +12,7 @@ export default function Properties() {
   const [editingProperty, setEditingProperty] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5555" 
+  const API_URL = "http://localhost:5555" 
 
 
   useEffect(() => {
