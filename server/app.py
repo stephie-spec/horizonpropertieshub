@@ -91,10 +91,7 @@ class Properties(Resource):
         )
         db.session.add(property)
         db.session.commit()
-        return make_response(jsonify({
-                "message": "Property created",
-                "property": property.to_dict()
-            }), 201)
+        return property.to_dict(), 201
 
     def put(self, property_id):
         property = Property.query.get_or_404(property_id)
@@ -110,7 +107,7 @@ class Properties(Resource):
         property = Property.query.get_or_404(property_id)
         db.session.delete(property)
         db.session.commit()
-        return {"message": "Property deleted"}, 200
+        return property.to_dict(), 200
 
 api.add_resource(Properties, '/properties', '/properties/<int:property_id>')
 
@@ -191,7 +188,7 @@ class Tenants(Resource):
         response_body = {
             "message": "Tenant deleted successfully"
         }
-        return jsonify(response_body), 200
+        return make_response(jsonify(response_body),200)
 
 api.add_resource(Tenants, '/tenants', '/tenants/<int:tenant_id>')
 

@@ -40,46 +40,50 @@ export default function Properties() {
     setShowModal(true)
   }
   //save/ update
-  const handleSaveProperty = async (formData) => {
-    let url = "http://127.0.0.1:5555/properties"
-    let method = "POST"
+const handleSaveProperty = (formData) => {
+  const formDataToSend = new FormData()
+  formDataToSend.append('name', formData.name)
+  formDataToSend.append('location', formData.location)
+  formDataToSend.append('description', formData.description)
+  formDataToSend.append('landlord_id', landlord.id)
 
-    if (editingProperty) {
-      url = `http://127.0.0.1:5555/properties/${editingProperty.id}`
-      method = "PUT"
-    }
-
-    const data = new FormData()
-
-    data.append("name", formData.name)
-    data.append("location", formData.location)
-    data.append("description", formData.description)
-    data.append("landlord_id", landlord.id)
-
-    const response = await fetch(url, {
-      method,
-      body: data,
-    })
-
-    if (!response.ok) {
-      console.error("Failed to save property")
-      return
-    }
-
-    const savedProperty = await response.json()
-
-    setProperties((prev) =>
-      editingProperty
-        ? prev.map((p) => (p.id === savedProperty.id ? savedProperty : p))
-        : [...prev, savedProperty]
-    )
-    setEditingProperty(null)
-    setShowModal(false)
+  let url = API_URL + '/properties'
+  let method = 'POST'
+  
+  if (editingProperty) {
+    url = `${API_URL}/properties/${editingProperty.id}`
+    method = 'PUT'
   }
+
+  fetch(url, {
+    method,
+    body: formDataToSend,
+  })
+    .then(res => res.json())
+    .then(result => {
+      const savedProperty = result.property || result
+      
+      if (editingProperty) {
+        setProperties(properties.map(p => 
+          p.id === editingProperty.id ? savedProperty : p
+        ))
+        toast.success("Property updated!")
+      } else {
+        setProperties([...properties, savedProperty])
+        toast.success("Property added!")
+      }
+      setEditingProperty(null)
+      setShowModal(false)
+    })
+    .catch(error => {
+      console.error("Save error:", error)
+      toast.error("Failed to save property")
+    })
+}
 
 
 const handleDeleteProperty = (id) => {
-  fetch(`http://127.0.0.1:5555/properties/${id}`, { 
+  fetch(`http://localhost:5555/properties/${id}`, { 
     method: "DELETE" 
   })
     .then(response => {
