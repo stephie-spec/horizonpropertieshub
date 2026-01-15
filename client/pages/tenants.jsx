@@ -4,7 +4,8 @@ import Layout from "../components/Layout"
 import TenantModal from "../components/TenantModal"
 import { toast } from "react-toastify"
 
-const API_URL = "http://127.0.0.1:5555"
+const API_URL = "http://localhost:5555"
+
 
 export default function Tenants() {
   const router = useRouter()
@@ -17,7 +18,7 @@ export default function Tenants() {
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
 
-  // Fetch landlord, tenants, and units
+  // Fetch all data
   useEffect(() => {
     const storedLandlord = JSON.parse(localStorage.getItem("landlord"))
     if (!storedLandlord) {
@@ -26,35 +27,27 @@ export default function Tenants() {
     }
 
     setLandlord(storedLandlord)
-    fetchTenants(storedLandlord.id)
-    fetchUnits(storedLandlord.id)
-  }, [])
+    
+    fetch(`${API_URL}/tenants`)
+      .then(res => res.json())
+      .then(data => {
+        setTenants(data || [])
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error("Tenants error:", err)
+        toast.error("Failed to load tenants")
+        setLoading(false)
+      })
 
-  const fetchTenants = async (landlordId) => {
-    try {
-      const res = await fetch(`${API_URL}/tenants?landlord_id=${landlordId}`)
-      if (!res.ok) throw new Error("Failed to fetch tenants")
-      const data = await res.json()
-      setTenants(data)
-    } catch (error) {
-      console.error(error)
-      toast.error("Failed to load tenants")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchUnits = async (landlordId) => {
-    try {
-      const res = await fetch(`${API_URL}/units?landlord_id=${landlordId}`)
-      if (!res.ok) throw new Error("Failed to fetch units")
-      const data = await res.json()
-      setUnits(data)
-    } catch (error) {
-      console.error(error)
-      toast.error("Failed to load units")
-    }
-  }
+    fetch(`${API_URL}/units`)
+      .then(res => res.json())
+      .then(data => setUnits(data || []))
+      .catch(err => {
+        console.error("Units error:", err)
+        toast.error("Failed to load units")
+      })
+  }, [router])
 
   const handleAddTenant = () => {
     setEditingTenant(null)
@@ -67,7 +60,7 @@ export default function Tenants() {
   }
 
   // Save tenant (create or update)
-  const handleSaveTenant = async (formData) => {
+  const handleSaveTenant = (formData) => {
     const method = editingTenant ? "PUT" : "POST"
     const url = editingTenant
       ? `${API_URL}/tenants/${editingTenant.id}`
@@ -75,63 +68,70 @@ export default function Tenants() {
 
     const data = new FormData()
     data.append("name", formData.name)
-    data.append("email", formData.email)
-    data.append("phone", formData.phone)
-    data.append("id_number", formData.id_number)
-    data.append("landlord_id", landlord.id)
+    data.append("email", formData.email || "")
+    data.append("phone", formData.phone || "")
+    data.append("id_number", formData.id_number || "")
 
-    try {
-      const res = await fetch(url, {
-        method,
-        body: data
+    fetch(url, {
+      method,
+      body: data
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Request failed")
+        return res.json()
       })
-
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "Request failed")
-      }
-
-      const savedTenant = await res.json()
-      
-      // Update local state
-      if (editingTenant) {
-        setTenants((prev) =>
-          prev.map((t) => (t.id === savedTenant.id ? savedTenant : t))
-        )
-        toast.success("Tenant updated successfully")
-      } else {
-        setTenants((prev) => [...prev, savedTenant])
-        toast.success("Tenant added successfully")
-      }
-
-      setShowModal(false)
-      setEditingTenant(null)
-    } catch (err) {
-      console.error(err)
-      toast.error(err.message || "Failed to save tenant")
-      throw err // Re-throw to let modal handle the error
-    }
+      .then(result => {
+        console.log("Save result:", result)
+        
+        if (editingTenant) {
+          setTenants(tenants.map(t => 
+            t.id === editingTenant.id ? result.tenant : t
+          ))
+          toast.success("Tenant updated!")
+        } else {
+          setTenants([...tenants, result.tenant])
+          toast.success("Tenant added!")
+        }
+        
+        setShowModal(false)
+        setEditingTenant(null)
+      })
+      .catch(err => {
+        console.error("Save error:", err)
+        toast.error("Failed to save tenant")
+      })
   }
 
   // Delete tenant
-  const handleDeleteTenant = async (id) => {
-    try {
-      const res = await fetch(`${API_URL}/tenants/${id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error("Failed to delete tenant")
-
-      setTenants(tenants.filter(t => t.id !== id))
-      toast.success("Tenant deleted successfully")
-    } catch (error) {
-      console.error(error)
-      toast.error("Failed to delete tenant")
-    } finally {
-      setDeleteId(null)
-    }
+  const handleDeleteTenant = (id) => {
+    fetch(`${API_URL}/tenants/${id}`, { 
+      method: "DELETE" 
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Delete failed")
+        return res.json()
+      })
+      .then(() => {
+        setTenants(tenants.filter(t => t.id !== id))
+        setDeleteId(null)
+        toast.success("Tenant deleted!")
+      })
+      .catch(error => {
+        console.error("Delete error:", error)
+        toast.error("Failed to delete tenant")
+        setDeleteId(null)
+      })
   }
 
   if (!landlord) return null
 
-  const query = (searchQuery || "").toLowerCase(); const filteredTenants = tenants.filter(t => (t.name || "").toLowerCase().includes(query) || (t.email || "").toLowerCase().includes(query) || (t.phone || "").includes(query) );
+  const query = (searchQuery || "").toLowerCase()
+  const filteredTenants = tenants.filter(t => 
+    (t.name || "").toLowerCase().includes(query) || 
+    (t.email || "").toLowerCase().includes(query) || 
+    (t.phone || "").includes(query)
+  )
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto">
@@ -246,6 +246,7 @@ export default function Tenants() {
             message="Are you sure you want to delete this tenant? This action cannot be undone."
             onConfirm={() => handleDeleteTenant(deleteId)}
             onCancel={() => setDeleteId(null)}
+            onError={(error) => toast.error(error.message)}
           />
         )}
       </div>

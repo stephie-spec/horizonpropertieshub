@@ -93,6 +93,9 @@ const handleDeleteProperty = (id) => {
     .catch(() => {
       toast.error("Failed to delete property")
     })
+    .finally(() => {
+      setDeleteId(null)  
+    })
 }
 
   if (!landlord) return null

@@ -62,61 +62,44 @@ useEffect(() => {
     setShowModal(true)
   }
 
-  const handleSavePayment = async (formData) => {
-    try {
-      if (editingPayment) {
-        const response = await fetch(
-          `${API_URL}/payments/${editingPayment.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-          }
-        )
+const handleSavePayment = (formData) => {
+  const formDataToSend = new FormData()
+  formDataToSend.append('tenant_id', formData.tenant_id)
+  formDataToSend.append('amount', formData.amount)
+  formDataToSend.append('mpesa_code', formData.mpesa_code || '')
+  formDataToSend.append('status', formData.status || 'pending')
 
-        if (!response.ok) {
-          throw new Error("Update failed")
-        }
-
-        const updatedPayment = await response.json()
-        const newPayments = payments.map((payment) => {
-          if (payment.id === updatedPayment.id) {
-            return updatedPayment
-          }
-          return payment
-        })
-
-        setPayments(newPayments)
-        toast.success("Payment updated successfully!")
-      } else {
-        const response = await fetch(`${API_URL}/payments`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        })
-
-        if (!response.ok) {
-          throw new Error("Create failed")
-        }
-
-        const newPayment = await response.json()
-
-        setPayments([...payments, newPayment])
-        toast.success("Payment recorded successfully!")
-      }
-
-      setShowModal(false)
-      setEditingPayment(null)
-    } catch (error) {
-      console.error("Failed to save payment:", error)
-      alert("Failed to save payment")
-    }
+  let url = API_URL + '/payments'
+  let method = 'POST'
+  
+  if (editingPayment) {
+    url = `${API_URL}/payments/${editingPayment.id}`
+    method = 'PUT'
   }
 
+  fetch(url, {
+    method,
+    body: formDataToSend,  
+  })
+    .then(res => res.json())
+    .then(result => {
+      if (editingPayment) {
+        setPayments(payments.map(p => 
+          p.id === editingPayment.id ? result.payment : p
+        ))
+        toast.success("Payment updated!")
+      } else {
+        setPayments([...payments, result.payment])
+        toast.success("Payment recorded!")
+      }
+      setShowModal(false)
+      setEditingPayment(null)
+    })
+    .catch(error => {
+      console.error("Save error:", error)
+      toast.error("Failed to save payment")
+    })
+}
 
 const handleDeletePayment = (id) => {
   fetch(`${API_URL}/payments/${id}`, {
@@ -134,6 +117,7 @@ const handleDeletePayment = (id) => {
     .catch(error => {
       console.error("Delete error:", error)
       toast.error("Failed to delete payment")
+      setDeleteId(null)
     })
 }
 

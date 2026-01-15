@@ -9,6 +9,8 @@ export default function Units() {
   const router = useRouter()
   const [landlord, setLandlord] = useState(null)
   const [units, setUnits] = useState([])
+  const [properties, setProperties] = useState([])
+  const [tenants, setTenants] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [editingUnit, setEditingUnit] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
@@ -142,7 +144,7 @@ const handleDeleteUnit = (id) => {
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Properties</option>
-            {mockProperties.map((p) => (
+            {properties.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>
@@ -175,7 +177,7 @@ const handleDeleteUnit = (id) => {
               </thead>
               <tbody>
                 {filteredUnits.map((unit) => {
-                  const property = mockProperties.find((p) => p.id === unit.property_id)
+                  const property = properties.find((p) => p.id === unit.property_id)
                   const tenant = unit.tenant_id ? mockTenants.find((t) => t.id === unit.tenant_id) : null
                   return (
                     <tr key={unit.id} className="border-b border-gray-200 hover:bg-gray-50">
