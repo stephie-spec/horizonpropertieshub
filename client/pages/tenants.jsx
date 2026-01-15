@@ -8,7 +8,7 @@ const API_URL = "http://127.0.0.1:5555"
 
 export default function Tenants() {
   const router = useRouter()
-  const [units, setUnits] = useState([])G
+  const [units, setUnits] = useState([])
   const [landlord, setLandlord] = useState(null)
   const [tenants, setTenants] = useState([])
   const [showModal, setShowModal] = useState(false)
@@ -131,12 +131,7 @@ export default function Tenants() {
 
   if (!landlord) return null
 
-  const filteredTenants = tenants.filter(t =>
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (t.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (t.phone || "").includes(searchQuery)
-  )
-
+  const query = (searchQuery || "").toLowerCase(); const filteredTenants = tenants.filter(t => (t.name || "").toLowerCase().includes(query) || (t.email || "").toLowerCase().includes(query) || (t.phone || "").includes(query) );
   return (
     <Layout>
       <div className="max-w-7xl mx-auto">
