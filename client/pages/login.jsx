@@ -9,7 +9,7 @@ export default function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" })
   const [loading, setLoading] = useState(false)
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5555" 
+  const API_URL = "http://localhost:5555" 
   
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })

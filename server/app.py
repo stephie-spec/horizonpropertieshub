@@ -12,15 +12,9 @@ from datetime import datetime
 app = Flask(__name__)
 database_url = os.environ.get('DATABASE_URL')
 
-if database_url:
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print("Using PostgreSQL on Render")
-else:
-    os.makedirs(os.path.join(app.root_path, "instance"), exist_ok=True)
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.root_path, 'instance', 'horizonpropertieshub.db')}"
-    print("Using SQLite locally")
+
+os.makedirs(os.path.join(app.root_path, "instance"), exist_ok=True)
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.root_path, 'instance', 'horizonpropertieshub.db')}"
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
@@ -97,10 +91,7 @@ class Properties(Resource):
         )
         db.session.add(property)
         db.session.commit()
-        return make_response(jsonify({
-                "message": "Property created",
-                "property": property.to_dict()
-            }), 201)
+        return property.to_dict(), 201
 
     def put(self, property_id):
         property = Property.query.get_or_404(property_id)
@@ -116,7 +107,7 @@ class Properties(Resource):
         property = Property.query.get_or_404(property_id)
         db.session.delete(property)
         db.session.commit()
-        return {"message": "Property deleted"}, 200
+        return property.to_dict(), 200
 
 api.add_resource(Properties, '/properties', '/properties/<int:property_id>')
 
