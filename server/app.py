@@ -185,10 +185,7 @@ class Tenants(Resource):
         db.session.delete(tenant)
         db.session.commit()
 
-        response_body = {
-            "message": "Tenant deleted successfully"
-        }
-        return make_response(jsonify(response_body),200)
+        return {"message": "Tenant deleted successfully"}, 200
 
 api.add_resource(Tenants, '/tenants', '/tenants/<int:tenant_id>')
 
