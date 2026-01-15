@@ -15,36 +15,47 @@ export default function Tenants() {
   const [editingTenant, setEditingTenant] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
 
-  //fetch
+  // Fetch landlord, tenants, and units
   useEffect(() => {
     const storedLandlord = JSON.parse(localStorage.getItem("landlord"))
-    if (!storedLandlord) return
+    if (!storedLandlord) {
+      router.push("/login")
+      return
+    }
 
     setLandlord(storedLandlord)
-
-  fetch(`${API_URL}/tenants?landlord_id=${storedLandlord.id}`)
-  .then(res => {
-    if (!res.ok) throw new Error("Failed to fetch tenants")
-    return res.json()
-  })
-  .then(setTenants)
-  .catch(() => toast.error("Failed to load tenants"))
+    fetchTenants(storedLandlord.id)
+    fetchUnits(storedLandlord.id)
   }, [])
 
-  useEffect(() => {
-  if (!landlord) return;
+  const fetchTenants = async (landlordId) => {
+    try {
+      const res = await fetch(`${API_URL}/tenants?landlord_id=${landlordId}`)
+      if (!res.ok) throw new Error("Failed to fetch tenants")
+      const data = await res.json()
+      setTenants(data)
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to load tenants")
+    } finally {
+      setLoading(false)
+    }
+  }
 
-fetch(`${API_URL}/units?landlord_id=${landlord.id}`)
-  .then(res => {
-    if (!res.ok) throw new Error("Failed to fetch units")
-    return res.json()
-  })
-  .then(setUnits)
-  .catch(() => toast.error("Failed to load units"))
-}, [landlord]);
-  
+  const fetchUnits = async (landlordId) => {
+    try {
+      const res = await fetch(`${API_URL}/units?landlord_id=${landlordId}`)
+      if (!res.ok) throw new Error("Failed to fetch units")
+      const data = await res.json()
+      setUnits(data)
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to load units")
+    }
+  }
+
   const handleAddTenant = () => {
     setEditingTenant(null)
     setShowModal(true)
@@ -54,67 +65,73 @@ fetch(`${API_URL}/units?landlord_id=${landlord.id}`)
     setEditingTenant(tenant)
     setShowModal(true)
   }
-  //save tenant or edit
+
+  // Save tenant (create or update)
   const handleSaveTenant = async (formData) => {
-  const method = editingTenant ? "PUT" : "POST"
-  const url = editingTenant
-    ? `${API_URL}/tenants/${editingTenant.id}`
-    : `${API_URL}/tenants`
+    const method = editingTenant ? "PUT" : "POST"
+    const url = editingTenant
+      ? `${API_URL}/tenants/${editingTenant.id}`
+      : `${API_URL}/tenants`
 
-  const data = new FormData()
-  data.append("name", formData.name)
-  data.append("email", formData.email)
-  data.append("phone", formData.phone)
-  data.append("id_number", formData.id_number)
-  data.append("landlord_id", landlord.id)
+    const data = new FormData()
+    data.append("name", formData.name)
+    data.append("email", formData.email)
+    data.append("phone", formData.phone)
+    data.append("id_number", formData.id_number)
+    data.append("landlord_id", landlord.id)
 
-  try {
-    const res = await fetch(url, {
-      method,
-      body: data
-    })
+    try {
+      const res = await fetch(url, {
+        method,
+        body: data
+      })
 
-    if (!res.ok) throw new Error("Request failed")
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.message || "Request failed")
+      }
 
-    const savedTenant = await res.json()
-    setTenants((prev) =>
-      editingTenant
-        ? prev.map((t) => (t.id === savedTenant.id ? savedTenant : t))
-        : [...prev, savedTenant]
-    )
-  } catch (err) {
-    console.error(err)
-    toast.error("Failed to save tenant")
+      const savedTenant = await res.json()
+      
+      // Update local state
+      if (editingTenant) {
+        setTenants((prev) =>
+          prev.map((t) => (t.id === savedTenant.id ? savedTenant : t))
+        )
+        toast.success("Tenant updated successfully")
+      } else {
+        setTenants((prev) => [...prev, savedTenant])
+        toast.success("Tenant added successfully")
+      }
+
+      setShowModal(false)
+      setEditingTenant(null)
+    } catch (err) {
+      console.error(err)
+      toast.error(err.message || "Failed to save tenant")
+      throw err // Re-throw to let modal handle the error
+    }
   }
-}
 
-
-  //delete tenant
+  // Delete tenant
   const handleDeleteTenant = async (id) => {
-  try {
-    const res = await fetch(`${API_URL}/tenants/${id}`, { method: "DELETE" })
-    if (!res.ok) throw new Error()
+    try {
+      const res = await fetch(`${API_URL}/tenants/${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Failed to delete tenant")
 
-    setTenants(tenants.filter(t => t.id !== id))
-    toast.success("Tenant deleted")
-  } catch {
-    toast.error("Failed to delete tenant")
-  } finally {
-    setDeleteId(null)
+      setTenants(tenants.filter(t => t.id !== id))
+      toast.success("Tenant deleted successfully")
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to delete tenant")
+    } finally {
+      setDeleteId(null)
+    }
   }
-}
-
-
 
   if (!landlord) return null
 
-  const filteredTenants = tenants.filter(t =>
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (t.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (t.phone || "").includes(searchQuery)
-  )
-
-
+  const query = (searchQuery || "").toLowerCase(); const filteredTenants = tenants.filter(t => (t.name || "").toLowerCase().includes(query) || (t.email || "").toLowerCase().includes(query) || (t.phone || "").includes(query) );
   return (
     <Layout>
       <div className="max-w-7xl mx-auto">
@@ -141,62 +158,92 @@ fetch(`${API_URL}/units?landlord_id=${landlord.id}`)
           />
         </div>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Phone</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">ID Number</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Unit</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTenants.map((tenant) => {
-                  const unit = units.find((u) => u.tenant_id === tenant.id)
-                  return (
-                    <tr key={tenant.id} className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{tenant.name}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{tenant.email}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{tenant.phone}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{tenant.id_number}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{unit ? unit.unit_number : "Unassigned"}</td>
-                      <td className="px-6 py-4 text-sm space-x-2">
-                        <button
-                          onClick={() => handleEditTenant(tenant)}
-                          className="text-blue-600 hover:text-blue-800 font-medium"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => setDeleteId(tenant.id)}
-                          className="text-red-600 hover:text-red-800 font-medium"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+            <p className="mt-4 text-gray-600">Loading tenants...</p>
           </div>
-        </div>
+        ) : filteredTenants.length === 0 ? (
+          <div className="bg-white rounded-lg shadow p-12 text-center">
+            <p className="text-gray-500 text-lg">No tenants found</p>
+            <button
+              onClick={handleAddTenant}
+              className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Add your first tenant
+            </button>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Phone</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">ID Number</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Unit</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTenants.map((tenant) => {
+                    const unit = units.find((u) => u.tenant_id === tenant.id)
+                    return (
+                      <tr key={tenant.id} className="border-b border-gray-200 hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{tenant.name}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{tenant.email || "-"}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{tenant.phone || "-"}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{tenant.id_number || "-"}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {unit ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {unit.unit_number}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              Unassigned
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm space-x-2">
+                          <button
+                            onClick={() => handleEditTenant(tenant)}
+                            className="text-blue-600 hover:text-blue-800 font-medium"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => setDeleteId(tenant.id)}
+                            className="text-red-600 hover:text-red-800 font-medium"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         <TenantModal
           isOpen={showModal}
           tenant={editingTenant}
-          onClose={() => setShowModal(false)}
+          onClose={() => {
+            setShowModal(false)
+            setEditingTenant(null)
+          }}
           onSave={handleSaveTenant}
         />
 
         {deleteId && (
           <ConfirmModal
             title="Delete Tenant"
-            message="Are you sure you want to delete this tenant?"
+            message="Are you sure you want to delete this tenant? This action cannot be undone."
             onConfirm={() => handleDeleteTenant(deleteId)}
             onCancel={() => setDeleteId(null)}
           />
